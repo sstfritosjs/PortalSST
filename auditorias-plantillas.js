@@ -277,6 +277,8 @@ function valoracion0312(p) {
 
 
 /* ── Estándares según el tamaño y el riesgo (Res. 0312 de 2019) ──
+   · Unidad de producción agropecuaria con 10 o menos trabajadores permanentes y riesgo
+     I, II o III: 3 estándares (art. 7). (v113)
    · Hasta 10 trabajadores y riesgo I, II o III: 7 estándares (art. 3).
    · De 11 a 50 trabajadores y riesgo I, II o III: 21 estándares (art. 9).
    · Más de 50 trabajadores, o riesgo IV o V (cualquier tamaño): los 60 (art. 16).
@@ -284,13 +286,110 @@ function valoracion0312(p) {
    los 60 (así salen las mismas pistas del portal). En estos grupos el porcentaje es el
    de estándares que se cumplen, todos con el mismo peso: verifícalo con el formato de
    tu ARL o del Ministerio del Trabajo. */
-function grupo0312(trabajadores, riesgo) {
+function grupo0312(trabajadores, riesgo, agropecuaria) {
   const n = Number(trabajadores) || 0, r = String(riesgo || '').toUpperCase().replace(/[^IV]/g, '');
   if (r === 'IV' || r === 'V' || n > 50) return 60;
   if (n >= 11) return 21;
+  if (n >= 1 && (agropecuaria === true || agropecuaria === 'Sí' || agropecuaria === 'si' || agropecuaria === 1)) return 3;
   return n >= 1 ? 7 : 60;
 }
+/** Artículo de la Res. 0312 que fija cada grupo. */
+const ARTICULO_0312 = { 3: 'art. 7', 7: 'art. 3', 21: 'art. 9', 60: 'art. 16' };
+/** A quién aplica cada grupo (para mostrarlo). */
+const QUIEN_0312 = { 3: 'unidad de producción agropecuaria con 10 o menos trabajadores permanentes, riesgo I, II o III',
+  7: 'hasta 10 trabajadores, riesgo I, II o III', 21: 'de 11 a 50 trabajadores, riesgo I, II o III', 60: 'más de 50 trabajadores, o riesgo IV o V con cualquier número' };
+/* Categorías de los estándares (Res. 0312, art. 27) con su peso en la tabla de los 60. */
+const CATEGORIAS_0312 = [
+  ['Planear', 'Recursos', 'Recursos', 10], ['Planear', 'Gestión integral', 'Gestión integral del SG-SST', 15],
+  ['Hacer', 'Gestión de la salud', 'Gestión de la salud', 20], ['Hacer', 'Peligros y riesgos', 'Gestión de peligros y riesgos', 30], ['Hacer', 'Amenazas', 'Gestión de amenazas', 10],
+  ['Verificar', 'Verificación', 'Verificación del SG-SST', 5], ['Actuar', 'Mejoramiento', 'Mejoramiento', 10]
+];
+/** Nombre de cada uno de los 60 estándares, como en la tabla del art. 16 de la Res. 0312 (v113). */
+const NOMBRE_0312 = {
+  '1.1.1': 'Asignación de una persona que diseñe e implemente el Sistema de Gestión de SST',
+  '1.1.2': 'Asignación de responsabilidades en SST',
+  '1.1.3': 'Asignación de recursos para el Sistema de Gestión en SST',
+  '1.1.4': 'Afiliación al Sistema de Seguridad Social Integral',
+  '1.1.5': 'Identificación de trabajadores que se dediquen en forma permanente a actividades de alto riesgo y cotización de pensión especial',
+  '1.1.6': 'Conformación y funcionamiento del COPASST',
+  '1.1.7': 'Capacitación de los integrantes del COPASST',
+  '1.1.8': 'Conformación y funcionamiento del Comité de Convivencia Laboral',
+  '1.2.1': 'Programa de capacitación anual',
+  '1.2.2': 'Inducción y reinducción en SST',
+  '1.2.3': 'Curso virtual de capacitación de cincuenta (50) horas en SST',
+  '2.1.1': 'Política de Seguridad y Salud en el Trabajo',
+  '2.2.1': 'Objetivos de SST',
+  '2.3.1': 'Evaluación inicial del Sistema de Gestión',
+  '2.4.1': 'Plan Anual de Trabajo',
+  '2.5.1': 'Archivo y retención documental del Sistema de Gestión de SST',
+  '2.6.1': 'Rendición de cuentas',
+  '2.7.1': 'Matriz legal',
+  '2.8.1': 'Mecanismos de comunicación',
+  '2.9.1': 'Identificación y evaluación para la adquisición de bienes y servicios',
+  '2.10.1': 'Evaluación y selección de proveedores y contratistas',
+  '2.11.1': 'Gestión del cambio',
+  '3.1.1': 'Descripción sociodemográfica y diagnóstico de condiciones de salud de los trabajadores',
+  '3.1.2': 'Actividades de medicina del trabajo y de prevención y promoción de la salud',
+  '3.1.3': 'Perfiles de cargos',
+  '3.1.4': 'Evaluaciones médicas ocupacionales',
+  '3.1.5': 'Custodia de las historias clínicas',
+  '3.1.6': 'Restricciones y recomendaciones médico laborales',
+  '3.1.7': 'Estilos de vida y entorno saludable',
+  '3.1.8': 'Servicios de higiene',
+  '3.1.9': 'Manejo de residuos',
+  '3.2.1': 'Reporte de accidentes de trabajo y enfermedades laborales',
+  '3.2.2': 'Investigación de incidentes, accidentes de trabajo y las enfermedades cuando sean diagnosticadas como laborales',
+  '3.2.3': 'Registro y análisis estadístico de accidentes de trabajo y enfermedades laborales',
+  '3.3.1': 'Frecuencia de accidentalidad',
+  '3.3.2': 'Severidad de accidentalidad',
+  '3.3.3': 'Proporción de accidentes de trabajo mortales',
+  '3.3.4': 'Prevalencia de la enfermedad laboral',
+  '3.3.5': 'Incidencia de la enfermedad laboral',
+  '3.3.6': 'Ausentismo por causa médica',
+  '4.1.1': 'Metodología para identificación de peligros, evaluación y valoración de riesgos',
+  '4.1.2': 'Identificación de peligros y evaluación y valoración de riesgos con participación de todos los niveles de la empresa',
+  '4.1.3': 'Identificación de sustancias catalogadas como carcinógenas o con toxicidad aguda',
+  '4.1.4': 'Mediciones ambientales',
+  '4.2.1': 'Medidas de prevención y control frente a peligros/riesgos identificados',
+  '4.2.2': 'Aplicación de medidas de prevención y control por parte de los trabajadores',
+  '4.2.3': 'Procedimientos e instructivos internos de seguridad y salud en el trabajo',
+  '4.2.4': 'Inspecciones a instalaciones, maquinaria o equipos',
+  '4.2.5': 'Mantenimiento periódico de las instalaciones, equipos, máquinas y herramientas',
+  '4.2.6': 'Entrega de los elementos de protección personal (EPP) y capacitación en uso adecuado',
+  '5.1.1': 'Plan de prevención, preparación y respuesta ante emergencias',
+  '5.1.2': 'Brigada de prevención, preparación y respuesta ante emergencias',
+  '6.1.1': 'Definición de indicadores del Sistema de Gestión de SST',
+  '6.1.2': 'Auditoría anual',
+  '6.1.3': 'Revisión por la alta dirección. Alcance de la auditoría del Sistema de Gestión',
+  '6.1.4': 'Planificación de la auditoría con el COPASST',
+  '7.1.1': 'Acciones preventivas y/o correctivas',
+  '7.1.2': 'Acciones de mejora conforme a revisión de la alta dirección',
+  '7.1.3': 'Acciones de mejora con base en investigaciones de accidentes de trabajo y enfermedades laborales',
+  '7.1.4': 'Plan de mejoramiento'
+};
+/** Los estándares del grupo (3, 7, 21 o 60) clasificados por ciclo PHVA y categoría.
+ *  [{ ciclo, n, categorias: [{ categoria, nombre, n, peso, items: [{ id, nombre, texto, valor }] }] }] */
+function clasificar0312(grupo) {
+  const g = [3, 7, 21].indexOf(Number(grupo)) !== -1 ? Number(grupo) : 60;
+  const P = PLANTILLAS_AUDITORIA[g === 60 ? 'RES0312' : 'RES0312_' + g];
+  const ciclos = [];
+  CATEGORIAS_0312.forEach(function (c) {
+    const items = P.items.filter(function (i) { return i[1] === c[0] && i[2] === c[1]; }).map(function (i) {
+      const corto = g === 60 ? (NOMBRE_0312[i[0]] || String(i[4])) : String(i[4]).split(' — ')[0];
+      return { id: i[0], nombre: corto, texto: i[4], valor: i[3] };
+    });
+    if (!items.length) return;
+    let ci = ciclos.filter(function (x) { return x.ciclo === c[0]; })[0];
+    if (!ci) { ci = { ciclo: c[0], n: 0, categorias: [] }; ciclos.push(ci); }
+    ci.categorias.push({ categoria: c[1], nombre: c[2], n: items.length, peso: Math.round(items.reduce(function (s, x) { return s + x.valor; }, 0) * 100) / 100, items: items });
+    ci.n += items.length;
+  });
+  return ciclos;
+}
 const SUBGRUPOS_0312 = {
+  // v113 · art. 7: unidades de producción agropecuaria. El 3.º no tiene numeral equivalente en los 60 (va con su propio código).
+  3: [['4.1.1', 'Identificar los peligros, evaluar y valorar los riesgos y establecer los controles'], ['4.2.1', 'Actividades para prevenir accidentes de trabajo y enfermedades laborales'],
+    ['UPA.3', 'Proteger la seguridad y salud de todas las personas que trabajan en la unidad', 'Hacer', 'Peligros y riesgos', 'Proteger la seguridad y salud de todas las personas que desarrollan actividades productivas en la unidad de producción agropecuaria (art. 7, numeral 3).']],
   7: [['1.1.1', 'Asignación de persona que diseña el Sistema de Gestión de SST'], ['1.1.4', 'Afiliación al Sistema de Seguridad Social Integral'],
     ['1.2.1', 'Capacitación en SST'], ['2.4.1', 'Plan anual de trabajo'], ['3.1.4', 'Evaluaciones médicas ocupacionales'],
     ['4.1.1', 'Identificación de peligros; evaluación y valoración de riesgos'], ['4.2.1', 'Medidas de prevención y control frente a peligros y riesgos identificados']],
@@ -307,17 +406,17 @@ const SUBGRUPOS_0312 = {
 };
 (function () {
   const base = {}; PLANTILLAS_AUDITORIA.RES0312.items.forEach(function (i) { base[i[0]] = i; });
-  [7, 21].forEach(function (n) {
-    const art = n === 7 ? 'art. 3' : 'art. 9';
+  [3, 7, 21].forEach(function (n) {
+    const art = ARTICULO_0312[n];
     PLANTILLAS_AUDITORIA['RES0312_' + n] = {
       nombre: 'Autoevaluación de ' + n + ' estándares mínimos (Res. 0312, ' + art + ')',
       corto: n + ' estándares mínimos Res. 0312',
       tipo: 'puntaje',
       grupo0312: n,
-      criterios: 'Resolución 0312 de 2019, ' + art + ' (' + (n === 7 ? 'hasta 10 trabajadores' : 'de 11 a 50 trabajadores') + ', riesgo I, II o III); Decreto 1072 de 2015.',
+      criterios: 'Resolución 0312 de 2019, ' + art + ' (' + QUIEN_0312[n] + '); Decreto 1072 de 2015.',
       origenAccion: 'Autoevaluación Res. 0312',
       // [id (numeral equivalente de los 60), ciclo, grupo, valor, texto]
-      items: SUBGRUPOS_0312[n].map(function (x) { const b = base[x[0]]; return [x[0], b[1], b[2], 100 / n, x[1] + ' — ' + b[4]]; })
+      items: SUBGRUPOS_0312[n].map(function (x) { const b = base[x[0]]; return b ? [x[0], b[1], b[2], 100 / n, x[1] + ' — ' + b[4]] : [x[0], x[2], x[3], 100 / n, x[1] + ' — ' + x[4]]; })
     };
   });
   PLANTILLAS_AUDITORIA.RES0312.grupo0312 = 60;

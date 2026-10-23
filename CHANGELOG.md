@@ -3,6 +3,34 @@
 Lo más nuevo arriba. Al sacar una versión: `node herramientas/subir-version.js`,
 anotarla aquí y `node herramientas/empaquetar.js`.
 
+## v113 — La instalación según la Res. 0312: cuántos estándares y por categoría
+
+**Actualiza el sitio.** Los servidores no cambiaron (córrelos igual si quieres que el
+Panel del asesor los vea al día: `node herramientas/actualizar-servidores.js clientes.json`).
+
+Instalación (`configurar-empresa.html`, paso 2 nuevo: «Estándares mínimos»)
+  · Número de trabajadores, clase de riesgo más alta y si es unidad de producción
+    agropecuaria → cuántos estándares debe cumplir: 3 (art. 7), 7 (art. 3), 21 (art. 9)
+    o 60 (art. 16), con el artículo y a quién aplica.
+  · La lista sale clasificada por ciclo PHVA y por categoría (Recursos, Gestión integral
+    del SG-SST, Gestión de la salud, Gestión de peligros y riesgos, Gestión de amenazas,
+    Verificación y Mejoramiento), con el nombre oficial y el numeral de cada estándar, y
+    en los 60 el peso de cada categoría (art. 27).
+  · En «Módulos», la marca «0312 · n» dice cuántos de sus estándares apoya cada módulo
+    (informativo: no apaga nada; cumplir los estándares no exime de las demás normas).
+  · Queda en el archivo de la empresa (perfil0312) y se carga al volver a abrir.
+
+El portal
+  · Mientras SST no guarde el perfil en el SG-SST, la autoevaluación, la carpeta de
+    evidencias, el plan anual, el kit documental, el informe y el tablero de la gerencia
+    usan el de la instalación (antes tomaban 60 por defecto).
+  · Nuevo grupo de 3 estándares (unidades agropecuarias, art. 7) con su autoevaluación.
+  · El perfil de la empresa y el Panel del asesor tienen «unidad agropecuaria».
+  · El sistema de gestión del inicio dice cuántos estándares le aplican.
+
+Pruebas: 1374 de código y 116 en navegador (nuevas: grupos 3/7/21/60, pesos del art. 27,
+clasificación por categoría y el paso de la instalación).
+
 ## v112 — El servidor también pide usuario, barra inferior y tablero con tickets
 
 **Actualiza el sitio Y los servidores** (`node herramientas/actualizar-servidores.js clientes.json`).

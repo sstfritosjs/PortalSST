@@ -547,7 +547,7 @@ function formatSavedAt(iso) {
  * Requiere sw.js v2 (que no hace skipWaiting automático).
  */
 /* Versión del portal (sitio). El panel del asesor la compara con la del servidor de cada cliente. */
-const VERSION_PORTAL_WEB = 'v112';
+const VERSION_PORTAL_WEB = 'v113';
 
 const UpdateManager = {
   init() {

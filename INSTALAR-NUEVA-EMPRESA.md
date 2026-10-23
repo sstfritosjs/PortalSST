@@ -70,10 +70,11 @@ Todas las empresas usan **los mismos archivos**: solo cambian `empresa.js` (los 
 1. Abre `https://<cuenta>.github.io/portal-sst/configurar-empresa.html`.
 2. Llena:
    - razón social, nombre corto, NIT, logo y color;
+   - **estándares mínimos (Res. 0312 de 2019)**: número de trabajadores, clase de riesgo más alta de la ARL y si es unidad de producción agropecuaria. El portal dice cuántos estándares debe cumplir (3, 7, 21 o 60) y los muestra **clasificados por ciclo (Planear, Hacer, Verificar, Actuar) y categoría** (Recursos, Gestión integral, Gestión de la salud, Gestión de peligros y riesgos, Gestión de amenazas, Verificación, Mejoramiento), con el peso de cada categoría en los 60;
    - códigos, versiones y fechas de los formatos;
-   - módulos que va a usar;
+   - módulos que va a usar (la marca **0312 · n** dice cuántos de sus estándares apoya cada módulo; no se apaga nada solo);
    - correos y centros de costo (clientes) para el ATS.
-3. En el paso 5, pega lo que dio **verConfiguracion**.
+3. En el paso 6, pega lo que dio **verConfiguracion**.
 4. **Descargar empresa.js** y **Descargar manifest.json**. Súbelos al repositorio **reemplazando** los que están.
 
 > Si después hay que cambiar algo (un código, el logo, un correo), vuelve a abrir `configurar-empresa.html`: carga lo que ya está y solo hay que corregir y volver a subir.
@@ -161,7 +162,7 @@ Las listas de requisitos de los programas y los pasos del PESV son una guía pr�
 
 ### Estándares según el tamaño y panel del asesor (v97)
 
-**Perfil de la empresa.** En *Auditorías* (o en el *Tablero de la gerencia*) se escribe el número de trabajadores y la clase de riesgo más alta. Con eso el portal sabe qué estándares le aplican (Res. 0312 de 2019): **7** si tiene hasta 10 trabajadores y riesgo I a III (art. 3), **21** si tiene de 11 a 50 y riesgo I a III (art. 9), y **60** si tiene más de 50 o riesgo IV o V (art. 16). La autoevaluación que le aplica sale de primera. En los grupos de 7 y 21 el porcentaje es el de estándares que se cumplen, todos con el mismo peso: compáralo con el formato de tu ARL.
+**Perfil de la empresa.** Desde v113 se define al instalar (`configurar-empresa.html`, paso 2) y queda en el archivo de la empresa (`perfil0312`). SST lo puede cambiar después en *Auditorías* o en el *Tablero de la gerencia* (el del SG-SST manda sobre el de la instalación). Con eso el portal sabe qué estándares le aplican (Res. 0312 de 2019): **3** si es unidad de producción agropecuaria con 10 o menos trabajadores permanentes y riesgo I a III (art. 7), **7** si tiene hasta 10 trabajadores y riesgo I a III (art. 3), **21** si tiene de 11 a 50 y riesgo I a III (art. 9), y **60** si tiene más de 50 o riesgo IV o V (art. 16). La autoevaluación que le aplica sale de primera. En los grupos de 7 y 21 el porcentaje es el de estándares que se cumplen, todos con el mismo peso: compáralo con el formato de tu ARL.
 
 **Panel del asesor** (`asesor.html`). Para quien asesora varias empresas que tienen el portal instalado: cada cliente con su tamaño, clase de riesgo y segmento (7, 21 o 60), filtros, visitas y tareas. Las tareas se dejan **en el plan de acción del cliente** (origen «Asesor SST»); el cliente las ve con un aviso, las trabaja y las cierra con evidencia, y el asesor las verifica o las reabre. «Tareas de sus estándares» crea de una vez las tareas de los estándares que el cliente no cumplió en su última autoevaluación. Para conectar un cliente hacen falta la URL de su servidor (`verConfiguracion`) y su clave del portal; si el cliente usa usuarios con nombre, debe crearle al asesor un usuario con rol SST.
 

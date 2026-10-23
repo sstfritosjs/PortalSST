@@ -392,27 +392,36 @@ const UI = (function () {
   const ID_PERFIL = 'EMPRESA-PERFIL';
   async function perfilEmpresa(filas){
     const f = (filas || (await SGSST.listar('empresa')).rows || []).find((x)=> x.tipo === 'empresa' || x.id === ID_PERFIL);
-    return f ? Object.assign({ id: f.id }, f.resumen) : null;
+    return f ? Object.assign({ id: f.id }, f.resumen) : perfilInstalacion();
   }
-  function textoGrupo(g){ return g === 7 ? '7 estándares (hasta 10 trabajadores, riesgo I a III · art. 3)' : g === 21 ? '21 estándares (11 a 50 trabajadores, riesgo I a III · art. 9)' : '60 estándares (más de 50 trabajadores, o riesgo IV o V · art. 16)'; }
+  /** v113: el perfil que se definió al instalar (configurar-empresa → EMPRESA.perfil0312).
+   *  Se usa mientras SST no haya guardado el perfil de la empresa en el SG-SST. */
+  function perfilInstalacion(){
+    const p = typeof EMPRESA !== 'undefined' && EMPRESA.perfil0312;
+    if (!p || !Number(p.trabajadores)) return null;
+    const agro = !!p.agropecuaria, g = typeof grupo0312 === 'function' ? grupo0312(p.trabajadores, p.claseRiesgo, agro) : (Number(p.grupo0312) || 60);
+    return { nombre: EMPRESA.nombre || '', nit: EMPRESA.nit || '', trabajadores: Number(p.trabajadores), claseRiesgo: p.claseRiesgo || 'I', agropecuaria: agro, grupo0312: g, desdeInstalacion: true };
+  }
+  function textoGrupo(g){ return g === 3 ? '3 estándares (unidad agropecuaria de hasta 10 trabajadores permanentes, riesgo I a III · art. 7)' : g === 7 ? '7 estándares (hasta 10 trabajadores, riesgo I a III · art. 3)' : g === 21 ? '21 estándares (11 a 50 trabajadores, riesgo I a III · art. 9)' : '60 estándares (más de 50 trabajadores, o riesgo IV o V · art. 16)'; }
   async function editarPerfil(alGuardar){
-    const d = (await SGSST.doc(ID_PERFIL)) || { nuevo: true, nombre: (typeof EMPRESA !== 'undefined' && EMPRESA.nombre) || '', nit: (typeof EMPRESA !== 'undefined' && EMPRESA.nit) || '' };
+    const d = (await SGSST.doc(ID_PERFIL)) || Object.assign({ nuevo: true, nombre: (typeof EMPRESA !== 'undefined' && EMPRESA.nombre) || '', nit: (typeof EMPRESA !== 'undefined' && EMPRESA.nit) || '' }, perfilInstalacion() || {});
     const m = modal('<h3>Perfil de la empresa</h3><p class="ayuda">Define qué estándares mínimos le aplican (Res. 0312 de 2019). Cuenta a todos los trabajadores (de planta, temporales y en misión) y usa la clase de riesgo más alta de la afiliación a la ARL.</p>' +
       '<div class="field"><label>Razón social</label><input type="text" id="peNom" value="' + esc(d.nombre || '') + '"></div>' +
       '<div class="grid2"><div class="field"><label>NIT</label><input type="text" id="peNit" value="' + esc(d.nit || '') + '"></div><div class="field"><label>Actividad económica</label><input type="text" id="peAct" value="' + esc(d.actividad || '') + '"></div></div>' +
       '<div class="grid2"><div class="field"><label>Número de trabajadores *</label><input type="number" min="1" id="peTrab" value="' + esc(d.trabajadores || '') + '"></div>' +
       '<div class="field"><label>Clase de riesgo más alta *</label><select id="peRies">' + ['I', 'II', 'III', 'IV', 'V'].map((r)=> '<option' + (r === d.claseRiesgo ? ' selected' : '') + '>' + r + '</option>').join('') + '</select></div></div>' +
+      '<label class="ayuda" style="display:flex;gap:8px;align-items:center;margin:0 0 10px;"><input type="checkbox" id="peAgro"' + (d.agropecuaria ? ' checked' : '') + '> Unidad de producción agropecuaria (hasta 10 trabajadores permanentes: 3 estándares, art. 7)</label>' +
       '<div class="aviso info" id="peGrupo"></div>' +
       '<div class="grid2"><div class="field"><label>Correo del responsable del SG-SST</label><input type="email" id="peCS" autocapitalize="none" value="' + esc(d.correoSST || '') + '"></div><div class="field"><label>Correo del asesor SST externo</label><input type="email" id="peCA" autocapitalize="none" value="' + esc(d.correoAsesor || '') + '"></div></div>' +
       '<div class="ayuda" style="margin:-4px 0 10px;">Si un asesor externo deja tareas en este portal, el responsable recibe el aviso por correo y el asesor, copia y el aviso cuando se cierran.</div>' +
       '<button type="button" class="btn amber" id="peOk">Guardar</button><button type="button" class="btn ghost" data-cerrar>Cancelar</button><div class="status-msg" id="peMsg"></div>', true);
-    const g = ()=> grupo0312(m.el.querySelector('#peTrab').value, m.el.querySelector('#peRies').value);
+    const g = ()=> grupo0312(m.el.querySelector('#peTrab').value, m.el.querySelector('#peRies').value, m.el.querySelector('#peAgro').checked);
     const ver = ()=> { m.el.querySelector('#peGrupo').textContent = m.el.querySelector('#peTrab').value ? 'Le aplican ' + textoGrupo(g()) + '.' : 'Escribe el número de trabajadores.'; };
-    m.el.querySelector('#peTrab').addEventListener('input', ver); m.el.querySelector('#peRies').addEventListener('change', ver); ver();
+    m.el.querySelector('#peTrab').addEventListener('input', ver); m.el.querySelector('#peRies').addEventListener('change', ver); m.el.querySelector('#peAgro').addEventListener('change', ver); ver();
     m.el.querySelector('#peOk').addEventListener('click', async ()=> {
       const t = Number(m.el.querySelector('#peTrab').value); if (!t) { m.el.querySelector('#peMsg').textContent = 'Falta el número de trabajadores.'; return; }
       const v = Object.assign({}, d, { nombre: m.el.querySelector('#peNom').value.trim(), nit: m.el.querySelector('#peNit').value.trim(), actividad: m.el.querySelector('#peAct').value.trim(),
-        trabajadores: t, claseRiesgo: m.el.querySelector('#peRies').value, grupo0312: g(), fechaActualizacion: hoy(),
+        trabajadores: t, claseRiesgo: m.el.querySelector('#peRies').value, agropecuaria: m.el.querySelector('#peAgro').checked, grupo0312: g(), fechaActualizacion: hoy(),
         correoSST: m.el.querySelector('#peCS').value.trim().toLowerCase(), correoAsesor: m.el.querySelector('#peCA').value.trim().toLowerCase() });
       const malC = [v.correoSST, v.correoAsesor].find((x)=> x && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(x)); if (malC) { m.el.querySelector('#peMsg').textContent = 'Revisa el correo: ' + malC; return; }
       const r = await Registros.guardar('empresa', ID_PERFIL, v, d.nuevo ? 0 : d.version);
@@ -481,5 +490,5 @@ const UI = (function () {
 
   return { $, toast, modal, src, imgs, avisoServidor, avisoCopia, hoy, corta, semaforo, diasHasta, cuandoTexto, comprimir, fotos, sig, padHTML, activarPad, firma,
            cargarPersonas, autocompletar, norm, cabecera, seccion, tablaDatos, textoLargo, fotosHoja, firmaHoja, imprimir, ORIGENES, nuevaAccion, guardarAccion,
-           historial, botonHistorial, adjuntos, perfilEmpresa, editarPerfil, textoGrupo, irKpi, chipsFiltro };
+           historial, botonHistorial, adjuntos, perfilEmpresa, perfilInstalacion, editarPerfil, textoGrupo, irKpi, chipsFiltro };
 })();

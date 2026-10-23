@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="sgsst.css">
 <style>
 .seg{display:inline-block;font-weight:800;font-size:11px;border-radius:6px;padding:2px 7px;margin-right:4px;background:#151b24;color:#fff;}
-.seg.s7{background:#2f7d55;} .seg.s21{background:#b07a00;} .seg.s60{background:#9c2f22;}
+.seg.s3{background:#0a8f7a;} .seg.s7{background:#2f7d55;} .seg.s21{background:#b07a00;} .seg.s60{background:#9c2f22;}
 .filtro{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
 .filtro button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;min-height:44px;font:600 13px inherit;font-family:inherit;cursor:pointer;}
 .filtro button.on{background:#151b24;color:#fff;border-color:#151b24;}
@@ -54,13 +54,13 @@
   <div class="aviso info como"><b>Para dejarle una tarea a una empresa:</b> toca «Asignar tarea» en su tarjeta. Queda en su plan de acción, en los pendientes del inicio y en el correo del lunes de quien la recibe; aquí ves si está abierta, vencida o cerrada. <a href="ayuda.html#asesor">Cómo funciona</a></div>
   <div class="kpis" id="kpis"></div>
   <div class="filtro" id="fGrupo">
-    <button type="button" class="on" data-g="">Todos</button><button type="button" data-g="7">7 estándares</button><button type="button" data-g="21">21 estándares</button><button type="button" data-g="60">60 estándares</button>
+    <button type="button" class="on" data-g="">Todos</button><button type="button" data-g="3">3 estándares</button><button type="button" data-g="7">7 estándares</button><button type="button" data-g="21">21 estándares</button><button type="button" data-g="60">60 estándares</button>
   </div>
   <div class="grid2"><select id="fRiesgo" class="buscar" style="margin:0;"><option value="">Todas las clases de riesgo</option><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select>
     <input type="search" class="buscar" id="buscar" placeholder="Buscar cliente" style="margin:0;"></div>
   <div id="fEstado" style="margin-top:10px;"></div>
   <div id="lista"><div class="empty">Cargando…</div></div>
-  <div class="version-portal">Portal SSTA · versión v112</div>
+  <div class="version-portal">Portal SSTA · versión v113</div>
 </div>
 <div class="screen" id="scrCli"></div>
 </div>
@@ -81,7 +81,7 @@ const $ = UI.$;
 const ORIGEN = 'Asesor SST';
 const C_CLI = [{ k: 'nombre', l: 'Empresa', req: true }, { k: 'nit', l: 'NIT', medio: true }, { k: 'ciudad', l: 'Ciudad', medio: true },
   { k: 'actividad', l: 'Actividad económica' },
-  { k: 'trabajadores', l: 'Número de trabajadores', t: 'number', req: true, medio: true }, { k: 'claseRiesgo', l: 'Clase de riesgo más alta', t: 'select', op: ['I', 'II', 'III', 'IV', 'V'], medio: true },
+  { k: 'trabajadores', l: 'Número de trabajadores', t: 'number', req: true, medio: true }, { k: 'claseRiesgo', l: 'Clase de riesgo más alta', t: 'select', op: ['I', 'II', 'III', 'IV', 'V'], medio: true }, { k: 'agropecuaria', l: 'Unidad de producción agropecuaria', t: 'select', op: ['No', 'Sí'], medio: true },
   { k: 'contacto', l: 'Contacto (responsable del SG-SST)', medio: true }, { k: 'telefono', l: 'Teléfono', medio: true }, { k: 'correo', l: 'Correo' },
   { k: 'codigo', l: 'Código en tu sitio multiempresa', ph: 'ej: acme-sas', medio: true, ayuda: 'Si la empresa entra a TU sitio con ?e=código.' },
   { k: 'sitio', l: 'O dirección de su propio portal', ph: 'https://…github.io/…', medio: true, ayuda: 'Si tiene un sitio aparte.' },
@@ -155,7 +155,7 @@ function pintar(){
   const cuenta = (g)=> act.filter((x)=> Number(x.resumen.grupo0312) === g).length;
   const desact = act.filter((x)=> x.resumen.versionServidor && x.resumen.versionServidor !== VERSION_PORTAL_WEB).length;
   const venc = act.reduce((a, x)=> a + (Number(x.resumen.tareasVencidas) || 0), 0), abT = act.reduce((a, x)=> a + (Number(x.resumen.tareasAbiertas) || 0), 0), visV = act.filter((x)=> x.vence && x.vence < h).length;
-  $('kpis').innerHTML = '<div class="kpi" data-ir="filtro:"><div class="v">' + act.length + '</div><div class="n">clientes activos</div><div class="f">' + segHtml(7) + cuenta(7) + ' · ' + segHtml(21) + cuenta(21) + ' · ' + segHtml(60) + cuenta(60) + '</div></div>' +
+  $('kpis').innerHTML = '<div class="kpi" data-ir="filtro:"><div class="v">' + act.length + '</div><div class="n">clientes activos</div><div class="f">' + (cuenta(3) ? segHtml(3) + cuenta(3) + ' · ' : '') + segHtml(7) + cuenta(7) + ' · ' + segHtml(21) + cuenta(21) + ' · ' + segHtml(60) + cuenta(60) + '</div></div>' +
     '<div class="kpi ' + (venc ? 'mal' : 'ok') + '" data-ir="filtro:' + (venc ? 'vencidas' : '') + '"><div class="v">' + venc + '</div><div class="n">tareas vencidas en los clientes</div><div class="f">' + abT + ' abiertas · según la última sincronización</div></div>' +
     '<div class="kpi ' + (visV ? 'mal' : 'ok') + '" data-ir="filtro:' + (visV ? 'visitas' : '') + '"><div class="v">' + visV + '</div><div class="n">visitas atrasadas</div></div>' +
     (act.some((x)=> x.resumen.versionServidor) ? '<div class="kpi ' + (desact ? 'pronto' : 'ok') + '" data-ir="filtro:' + (desact ? 'servidor' : '') + '"><div class="v">' + desact + '</div><div class="n">servidores por actualizar</div><div class="f">portal ' + esc(VERSION_PORTAL_WEB) + ' · herramientas/actualizar-servidores.js</div></div>' : '');
@@ -187,10 +187,10 @@ $('fRiesgo').addEventListener('change', pintar); $('buscar').addEventListener('i
 function editarCliente(d){
   Registros.editar({ titulo: (d.nuevo ? 'Nuevo cliente' : d.nombre), campos: C_CLI, datos: d,
     despues: '<div class="aviso info" data-seg></div>',
-    alAbrir: (el, pref)=> { const v = ()=> { const g = grupo0312(el.querySelector('#' + pref + 'trabajadores').value, el.querySelector('#' + pref + 'claseRiesgo').value); el.querySelector('[data-seg]').textContent = 'Le aplican ' + UI.textoGrupo(g) + '.'; };
-      el.querySelector('#' + pref + 'trabajadores').addEventListener('input', v); el.querySelector('#' + pref + 'claseRiesgo').addEventListener('change', v); v(); },
+    alAbrir: (el, pref)=> { const ag = el.querySelector('#' + pref + 'agropecuaria'); const v = ()=> { const g = grupo0312(el.querySelector('#' + pref + 'trabajadores').value, el.querySelector('#' + pref + 'claseRiesgo').value, ag && ag.value === 'Sí'); el.querySelector('[data-seg]').textContent = 'Le aplican ' + UI.textoGrupo(g) + '.'; };
+      el.querySelector('#' + pref + 'trabajadores').addEventListener('input', v); el.querySelector('#' + pref + 'claseRiesgo').addEventListener('change', v); if (ag) ag.addEventListener('change', v); v(); },
     borrar: d.nuevo ? null : async ()=> { const ok = await Registros.borrar(d.id, 'Borrado desde el panel del asesor'); if (ok) { show('scrLista'); cargar(); } return ok; },
-    alGuardar: async (v)=> { v.grupo0312 = grupo0312(v.trabajadores, v.claseRiesgo); v.servidor = String(v.servidor || '').trim();
+    alGuardar: async (v)=> { v.grupo0312 = grupo0312(v.trabajadores, v.claseRiesgo, v.agropecuaria === 'Sí'); v.servidor = String(v.servidor || '').trim();
       if (v.servidor && !/^https:\/\//.test(v.servidor)) return 'La URL del servidor debe empezar por https://';
       const r = await Registros.guardar('cliente', d.id, v, d.nuevo ? 0 : d.version); if (typeof r === 'string') return r;
       await cargar(); if (!d.nuevo) abrir(d.id); return true; } });
@@ -203,7 +203,7 @@ let tareas = [], autoeval = null, respCli = [], fTar = 'abiertas';
 async function abrir(id, asignar){
   const d = await Registros.abrir(id); if (!d) return;
   actual = d; tareas = []; autoeval = null; perfilCli = null; respCli = []; fTar = 'abiertas';
-  const g = Number(d.grupo0312) || grupo0312(d.trabajadores, d.claseRiesgo);
+  const g = Number(d.grupo0312) || grupo0312(d.trabajadores, d.claseRiesgo, d.agropecuaria === 'Sí' || d.agropecuaria === true);
   const s = $('scrCli');
   s.innerHTML = '<div class="hdr"><a class="back" href="#" data-volver>← Volver a los clientes</a><div class="eyebrow">' + esc(d.nit ? 'NIT ' + d.nit : d.id) + '</div><h1>' + esc(d.nombre) + '</h1><p>' + segHtml(g) + esc([d.trabajadores + ' trabajadores', 'riesgo ' + d.claseRiesgo, d.ciudad].filter(Boolean).join(' · ')) + '</p></div>' +
     '<div class="acciones-top"><button type="button" class="btn ghost" id="cEditar">Datos del cliente</button>' + (sitioCli(d) ? '<a class="btn ghost" href="' + esc(sitioCli(d)) + '" target="_blank" rel="noopener">Abrir su portal ↗</a>' : '') +
@@ -288,7 +288,7 @@ function pintarTareas(perfil){
   $('cCorreos').addEventListener('click', ()=> configurarCorreos(perfil));
   if ($('fTar')) $('fTar').addEventListener('click', (e)=> { const b = e.target.closest('[data-ft]'); if (!b) return; fTar = b.dataset.ft; pintarTareas(); });
   if ($('cUsarPerfil')) $('cUsarPerfil').addEventListener('click', async ()=> { const p = perfil.resumen;
-    const r = await SGSST.enviar({ action: 'parche', tipo: 'cliente', id: c.id, campos: { trabajadores: Number(p.trabajadores), claseRiesgo: p.claseRiesgo, grupo0312: grupo0312(p.trabajadores, p.claseRiesgo) } });
+    const r = await SGSST.enviar({ action: 'parche', tipo: 'cliente', id: c.id, campos: { trabajadores: Number(p.trabajadores), claseRiesgo: p.claseRiesgo, agropecuaria: p.agropecuaria ? 'Sí' : 'No', grupo0312: grupo0312(p.trabajadores, p.claseRiesgo, !!p.agropecuaria) } });
     if (r.ok) { await cargar(); abrir(c.id); } });
   $('cTar').querySelectorAll('[data-ver]').forEach((b)=> b.addEventListener('click', ()=> cambiarTarea(b.dataset.ver, 'verificar')));
   $('cTar').querySelectorAll('[data-reabrir]').forEach((b)=> b.addEventListener('click', ()=> cambiarTarea(b.dataset.reabrir, 'reabrir')));
@@ -311,7 +311,7 @@ function configurarCorreos(perfil){
     if (!ok(cs) || !ok(ca)) { msg.textContent = 'Revisa los correos.'; return; }
     const campos = { correoSST: cs, correoAsesor: ca };
     // Si el cliente aún no tiene perfil, se crea con los datos de tu panel.
-    if (!perfil) Object.assign(campos, { nombre: c.nombre, nit: c.nit || '', actividad: c.actividad || '', trabajadores: Number(c.trabajadores) || '', claseRiesgo: c.claseRiesgo || 'I', grupo0312: Number(c.grupo0312) || grupo0312(c.trabajadores, c.claseRiesgo), fechaActualizacion: UI.hoy() });
+    if (!perfil) Object.assign(campos, { nombre: c.nombre, nit: c.nit || '', actividad: c.actividad || '', trabajadores: Number(c.trabajadores) || '', claseRiesgo: c.claseRiesgo || 'I', agropecuaria: c.agropecuaria === 'Sí', grupo0312: Number(c.grupo0312) || grupo0312(c.trabajadores, c.claseRiesgo, c.agropecuaria === 'Sí'), fechaActualizacion: UI.hoy() });
     msg.textContent = 'Guardando…';
     const r = await Cli.pedirSiHaceFalta(c, ()=> Cli.post(c, { action: 'parche', tipo: 'empresa', id: 'EMPRESA-PERFIL', campos }));
     if (!r.ok) { msg.textContent = 'No se guardó: ' + (r.error || ''); return; }

@@ -72,7 +72,7 @@ table.cif td:last-child{text-align:right;font-weight:700;white-space:nowrap;}
     <div class="fila-btn"><button type="button" class="btn amber" id="btnPdf" disabled>Sacar el PDF con firma</button><button type="button" class="btn ghost" id="btnAct">Actualizar datos</button></div>
   </div>
   <div id="contenido"><div class="empty">Revisando todo el SG-SST…</div></div>
-  <div class="version-portal">Portal SSTA · versión v112</div>
+  <div class="version-portal">Portal SSTA · versión v113</div>
 </div>
 </div>
 <div id="tipGraf" role="status" aria-live="polite"></div>
@@ -132,7 +132,7 @@ async function cargar(){
   rows = r.rows;
   try { await Habilitacion.cargar(); } catch (e) {}
   const pf = rows.find((x)=> x.id === 'EMPRESA-PERFIL');
-  perfilDoc = pf ? (await SGSST.doc('EMPRESA-PERFIL')) || Object.assign({}, pf.resumen) : {};
+  perfilDoc = pf ? (await SGSST.doc('EMPRESA-PERFIL')) || Object.assign({}, pf.resumen) : (UI.perfilInstalacion() || {});
   cargado = true;
   await recalcular();
   // Evidencias por estándar (Res. 0312) y charlas de asistencia: sin frenar la primera vista.
