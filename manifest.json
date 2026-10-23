@@ -1,13 +1,13 @@
 {
-  "name": "Portal SSTA",
-  "short_name": "Portal SSTA",
+  "name": "Portal SSTA — FRITOS JS",
+  "short_name": "SSTA FRITOS JS",
   "description": "Sistema de gestión de seguridad y salud en el trabajo: permisos, inspecciones, comités, indicadores y más.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#eef1f4",
-  "theme_color": "#1f3b57",
+  "theme_color": "#fcb73e",
   "lang": "es-CO",
   "dir": "ltr",
   "icons": [
