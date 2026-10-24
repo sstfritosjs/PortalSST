@@ -88,8 +88,18 @@ async function fetchWithRetry(url, options, retries = 2, backoffMs = 800) {
    no está en GitHub: se escribe una vez en cada celular y queda guardada
    en ese equipo. Mientras un equipo no tenga clave, se sigue usando el
    token de config.js (los backends que aún no tengan clave lo aceptan). */
+/* v115: la consola del administrador (admin.html, asesor.html) guarda su sesión y su
+   clave aparte (ssta-admin-…): en el mismo equipo no se mezclan con las de un cliente. */
+const Consola = {
+  activa() { return typeof EMPRESA !== 'undefined' && !!EMPRESA.consola; },
+  clave(k) { return this.activa() ? k.replace(/^ssta-/, 'ssta-admin-') : k; },
+  /** ¿En este equipo entró el administrador general? (ve los detalles técnicos). */
+  esEquipoAdmin() {
+    try { const s = JSON.parse(localStorage.getItem('ssta-admin-sesion') || 'null'); return !!(s && s.token && s.exp > Date.now() && s.yo && s.yo.rol === 'admin'); } catch (e) { return false; }
+  }
+};
 const ClavePortal = {
-  KEY: 'ssta-clave-portal',
+  get KEY() { return Consola.clave('ssta-clave-portal'); },
   get() { try { return localStorage.getItem(this.KEY) || ''; } catch (e) { return ''; } },
   tiene() { return !!this.get(); },
   guardar(v) {
@@ -547,7 +557,7 @@ function formatSavedAt(iso) {
  * Requiere sw.js v2 (que no hace skipWaiting automático).
  */
 /* Versión del portal (sitio). El panel del asesor la compara con la del servidor de cada cliente. */
-const VERSION_PORTAL_WEB = 'v113';
+const VERSION_PORTAL_WEB = 'v116';
 
 const UpdateManager = {
   init() {
@@ -633,7 +643,9 @@ const Outbox = {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('pending', 'readwrite');
       const store = tx.objectStore('pending');
-      const nuevo = { url, body, savedAt: new Date().toISOString(), intentos: 0 };
+      // v116: lo de la consola del administrador y lo del portal de un cliente no se mezclan en la cola
+      // (cada uno sale con su clave y su sesión, y solo desde su lado).
+      const nuevo = { url, body, savedAt: new Date().toISOString(), intentos: 0, ambito: Consola.activa() ? 'consola' : 'portal' };
       // v110: la misma operación (mismo opId) no se encola dos veces: si alguien
       // vuelve a guardar sin señal, queda solo la versión más reciente.
       const op = body && body.opId;
@@ -709,7 +721,9 @@ const Outbox = {
       // lleguen en orden y uno viejo no pise a uno nuevo.
       const trabados = new Set();
       const claveDoc = (it) => (it.body && it.body.id && /^(guardar|parche|borrar|adjuntar|quitarAdjunto)$/.test(it.body.action || '')) ? it.url + '|' + it.body.id : null;
+      const ambito = Consola.activa() ? 'consola' : 'portal';
       for (const item of items) {
+        if ((item.ambito || 'portal') !== ambito) continue;
         const cd = claveDoc(item);
         if (cd && trabados.has(cd)) continue;
         if (cd) trabados.add(cd);   // se suelta abajo si salió
@@ -1831,8 +1845,8 @@ const Festivos = {
    (PBKDF2, 150.000 vueltas) con la sal del usuario y eso es lo que viaja.
    La sesión dura 30 días en un equipo personal y 12 horas en uno compartido. */
 const Sesion = {
-  KEY: 'ssta-sesion',
-  KEY_MODO: 'ssta-sgsst-usuarios',
+  get KEY() { return Consola.clave('ssta-sesion'); },
+  get KEY_MODO() { return Consola.clave('ssta-sgsst-usuarios'); },
   ITER: 150000,
   get() { try { const s = JSON.parse(localStorage.getItem(this.KEY) || 'null'); if (s && s.token && s.exp > Date.now()) return s; } catch (e) {} return null; },
   token() { const s = this.get(); return s ? s.token : ''; },
@@ -1937,7 +1951,7 @@ const Sesion = {
       '<button type="button" class="ses-si" id="sesEntrar">Entrar</button><button type="button" class="ses-no" id="sesNo">Ahora no</button><div class="ses-msg" id="sesMsg"></div>');
     const cerrar = () => { m.cerrar(); this._abierto = false; };
     const usr = m.el.querySelector('#sesUsr'), cl = m.el.querySelector('#sesClave'), msg = m.el.querySelector('#sesMsg'), b = m.el.querySelector('#sesEntrar');
-    try { usr.value = localStorage.getItem('ssta-ultimo-usuario') || ''; } catch (e) {}
+    try { usr.value = localStorage.getItem(Consola.clave('ssta-ultimo-usuario')) || ''; } catch (e) {}
     // Empresa demo: usuarios ficticios para probar cada rol con un toque.
     const demo = typeof EMPRESA !== 'undefined' && EMPRESA.demo && EMPRESA.demoUsuarios;
     if (demo) {
@@ -1953,7 +1967,7 @@ const Sesion = {
       try {
         const r = await this.entrar(usr.value, cl.value, m.el.querySelector('#sesComp').checked);
         if (!r.ok) { msg.textContent = r.error || 'No se pudo entrar.'; b.disabled = false; return; }
-        try { localStorage.setItem('ssta-ultimo-usuario', usr.value.trim().toLowerCase()); } catch (e) {}
+        try { localStorage.setItem(Consola.clave('ssta-ultimo-usuario'), usr.value.trim().toLowerCase()); } catch (e) {}
         cerrar();
         if (r.yo && r.yo.debeCambiar) this.cambiarClave(true);
         else this._despues();
@@ -2006,6 +2020,7 @@ const Sesion = {
   /** Botón 👤 arriba a la derecha (solo si el servidor usa usuarios o hay sesión). */
   pintarChip() {
     if (typeof document === 'undefined' || !document.body) return;
+    if (document.body.classList.contains('consola')) return;   // la consola muestra quién entró en su encabezado
     let c = document.getElementById('sesChip');
     const yo = this.yo();
     if (!yo && !this.modo()) { if (c) c.remove(); return; }
@@ -2034,8 +2049,8 @@ const SGSST = {
     return prefijo + '-' + d.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
   },
   nuevoOpId() { return 'sg-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); },
-  _lsGet(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
-  _lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* memoria llena: no es grave */ } },
+  _lsGet(k, def) { try { const v = localStorage.getItem(Consola.clave(k)); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+  _lsSet(k, v) { try { localStorage.setItem(Consola.clave(k), JSON.stringify(v)); } catch (e) { /* memoria llena: no es grave */ } },
   async _json(res) {
     const t = await res.text();
     try { return JSON.parse(t); } catch (e) { const err = new Error(Outbox.describirPagina ? Outbox.describirPagina(t, res.status) : 'Respuesta no válida'); err.pagina = true; throw err; }
@@ -2389,6 +2404,7 @@ const Iconos = (function () {
    (Guardar, Enviar…), para no tapar nada, ni al imprimir. */
 const BarraInferior = (function () {
   if (typeof document === 'undefined') return null;
+  if (Consola.activa()) return null;   // v115: la consola del administrador no lleva la barra de los clientes
   const ITEMS = [
     { id: 'inicio', href: 'index.html', txt: 'Inicio', d: 'M4 11l8-7 8 7M6 10v10h12V10' },
     { id: 'permisos', href: 'dashboard.html', txt: 'Permisos', d: 'M9 4h6v3H9zM7 5.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6.5a1 1 0 0 0-1-1h-1M9 14l2 2 4-4' },

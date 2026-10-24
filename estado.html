@@ -70,10 +70,11 @@ body{margin:0;background:var(--bg,#eef1f4);color:var(--ink);font-family:var(--fo
     <div id="equipo"></div>
   </div>
   <p class="nota">Esta página solo LEE de cada servidor: no guarda ni cambia nada. Si un servidor sale en rojo, toca «Abrir enlace de prueba»: lo que muestre esa página (datos o una pantalla de Google) es exactamente lo que recibe el portal.</p>
-  <div class="nota" style="text-align:center;">Portal SSTA · versión v113</div>
+  <div class="nota" style="text-align:center;">Portal SSTA · versión v116</div>
 </div>
 
 <script src="empresa.js"></script>
+<script src="empresa-motor.js"></script>
 <script src="config.js"></script>
 <script src="common.js"></script>
 <script src="valida.js"></script>
@@ -90,7 +91,7 @@ if (typeof UpdateManager !== 'undefined') UpdateManager.init();
    asistencia quedaba "pendiente" y solo abriendo el enlace a mano se vio
    que la implementación no era pública.
    ============================================================ */
-const VERSION = 'v113';
+const VERSION = 'v116';
 const $ = (id)=>document.getElementById(id);
 // Qué se consulta en cada uno (siempre algo de solo lectura).
 const PRUEBAS = [
@@ -106,6 +107,15 @@ const PRUEBAS = [
   { k:'sgsst', q:'action=list', cuenta:'rows', que:'registros' }
 ];
 let resultados = [];
+/* v115: los detalles técnicos (enlaces de prueba, clave, versiones) solo en el equipo del
+   administrador general (donde entró a la consola). El cliente ve si funciona o no. */
+const TECNICO = typeof Consola !== 'undefined' && Consola.esEquipoAdmin();
+function paraCliente(r){
+  if (TECNICO || !r.estado || r.estado === 'ok') return r;
+  if (r.estado === 'gris') return Object.assign({}, r, { chip: r.chip === 'Sin conexión' ? r.chip : 'No activo', det: r.chip === 'Sin conexión' ? r.det : 'Este módulo no está activo para tu empresa.' });
+  return Object.assign({}, r, { chip: 'No funciona', det: 'No está funcionando desde este celular. Lo que registres queda guardado aquí y se envía cuando se arregle. Avísale a tu proveedor del portal con «Enviar por WhatsApp».' });
+}
+if (!TECNICO) { const n = document.querySelector('.nota'); if (n) n.hidden = true; const p = document.querySelector('.hdr p'); if (p) p.textContent = 'Revisa si el portal funciona desde este celular'; }
 
 function conLimite(p, ms){ return Promise.race([p, new Promise((_, rej)=> setTimeout(()=> rej(Object.assign(new Error('tardó más de ' + Math.round(ms/1000) + ' s'), { lento:true })), ms))]); }
 
@@ -152,11 +162,11 @@ async function probarUno(t){
 }
 
 function pintar(){
-  $('servidores').innerHTML = resultados.map((r,i)=> `
+  $('servidores').innerHTML = resultados.map(paraCliente).map((r,i)=> `
     <div class="srv ${r.estado || 'gris'}">
       <div class="fila">${Iconos.senal(r.t.k === 'sgsst' ? 'tablero' : r.t.k, 'chico')}<span class="nom">${esc(r.nombre)}</span><span class="chip">${esc(r.chip || 'Probando…')}</span></div>
       ${r.det ? `<div class="det">${esc(r.det)}</div>` : ''}
-      ${r.url && r.estado !== 'ok' && r.estado ? `<div class="acc"><a href="${esc(r.url)}" target="_blank" rel="noopener">Abrir enlace de prueba ↗</a>${r.clave ? '<button type="button" data-clave>🔑 Escribir clave</button>' : ''}</div>` : ''}
+      ${TECNICO && r.url && r.estado !== 'ok' && r.estado ? `<div class="acc"><a href="${esc(r.url)}" target="_blank" rel="noopener">Abrir enlace de prueba ↗</a>${r.clave ? '<button type="button" data-clave>🔑 Escribir clave</button>' : ''}</div>` : ''}
     </div>`).join('');
   $('servidores').querySelectorAll('[data-clave]').forEach(b=> b.addEventListener('click', ()=> ClavePortal.pedir()));
   const listos = resultados.filter(r=>r.estado);
@@ -198,14 +208,17 @@ async function pintarEquipo(){
   let pendientes = 0, swVer = '—';
   try { pendientes = (await Outbox.list()).length; } catch(e){}
   try { const ks = await caches.keys(); const v = ks.find(k=>/^ssta-portal-/.test(k)); if (v) swVer = v.replace('ssta-portal-',''); } catch(e){}
-  $('equipo').innerHTML = [
+  $('equipo').innerHTML = (TECNICO ? [
     ['Versión de esta página', VERSION],
     ['Versión guardada para usar sin señal', swVer + (swVer !== '—' && swVer !== VERSION ? ' (se actualiza sola al volver a abrir)' : '')],
     ['Conexión', navigator.onLine ? 'Con internet' : 'Sin internet'],
     ['Clave del portal en este equipo', ClavePortal.tiene() ? 'Guardada' : 'No tiene'],
     ['Pendientes de enviar', pendientes ? pendientes + ' — <a href="#" id="verPend">ver cuáles</a>' : 'Ninguno'],
     ...(correosInfo ? [['Correos del servidor (límite diario de Google)', textoCorreos(correosInfo)]] : [])
-  ].map(([k,v])=>`<div class="dato"><span>${k}</span><b>${v}</b></div>`).join('');
+  ] : [
+    ['Conexión', navigator.onLine ? 'Con internet' : 'Sin internet'],
+    ['Pendientes de enviar', pendientes ? pendientes + ' — <a href="#" id="verPend">ver cuáles</a>' : 'Ninguno']
+  ]).map(([k,v])=>`<div class="dato"><span>${k}</span><b>${v}</b></div>`).join('');
   const vp = $('verPend'); if (vp) vp.addEventListener('click', e=>{ e.preventDefault(); OutboxBadge.verPendientes(); });
   actualizarInforme(pendientes, swVer);
 }

@@ -346,6 +346,34 @@ El inicio quedó en dos partes:
 - **Revisión por la dirección** con los 24 puntos del Dec. 1072, art. 2.2.4.6.31, y rendición de cuentas de responsable del SG-SST, comités, brigada y gerencia.
 - **Formatos nuevos** (códigos en Configurar la empresa): SG-EVAL-PROVEEDOR, SG-EMERGENCIAS-ACTA, SG-LUGARES-QUIMICOS, SG-CONSUMOS.
 
+## Tu consola de administrador (v115–v116)
+
+El portal tiene **dos interfaces**:
+
+| | Quién | Dónde | Qué ve |
+|---|---|---|---|
+| **Portal** | Trabajadores y SST de cada empresa | `https://tu-sitio/` (o `?e=código`) | Preoperacionales y reportes sin clave; su sistema de gestión con su usuario |
+| **Consola** | Solo tú (administrador general) | `https://tu-sitio/admin.html` | Todos tus clientes, sus servidores, sus módulos, instalaciones nuevas, panel del asesor y tareas |
+
+**Activar la consola (una vez):**
+1. Tu sitio necesita **su propio servidor** (instálalo como el de cualquier empresa) puesto en «Tu sitio multiempresa (tu marca)» del configurador. Vuelve a generar ahí tu `empresa.js` (desde la v116 el motor va en `empresa-motor.js`).
+2. Abre `admin.html`. Si tu servidor aún no tiene usuarios: en Apps Script ejecuta `sgsst__codigoAdministrador`, escribe el código en la consola y crea tu usuario. Luego entra con él.
+3. En tu servidor ejecuta una vez `sgsst__instalarVigilancia` (revisión diaria de los clientes a las 6 a. m., con correo a `CORREOS_AVISO`).
+4. Guarda `admin.html` en favoritos. Ningún menú de los clientes lleva ahí.
+
+**Instalar una empresa nueva (un solo flujo, v116):**
+1. Instala su servidor único en **su** cuenta de Google (paso 1 de esta guía) y ejecuta `verConfiguracion`.
+2. En la consola: **Instalar empresa nueva** → llena el configurador (código, datos, 0312, módulos) y pega lo que dio `verConfiguracion` (servidor, clave, llave del proveedor y scriptId).
+3. **Guardar en tu consola y publicar.** Queda registrada como cliente, su configuración queda en tu servidor (no hay que subir archivos a GitHub) y su servidor recibe los módulos contratados. Sale su enlace `?e=código` y su QR.
+
+**Lo que haces después desde la consola:**
+- **Revisar** cada servidor (o todos) en vivo; la revisión diaria aparece en cada tarjeta.
+- **Módulos / editar:** abre el configurador con su configuración; cambias y vuelves a «Guardar en tu consola y publicar». Sus celulares lo toman al abrir el portal y su servidor deja de aceptar lo apagado.
+- **Descargar clientes.json** y correr `node herramientas/actualizar-servidores.js clientes.json` para ponerlos al día.
+- **Panel del asesor y tareas** y **Tu marca / empresa principal**.
+
+Si cambias la llave de un cliente (`nuevaLlaveProveedor` en su Apps Script), pega la nueva en su ficha. En el equipo donde entraste a la consola, el portal muestra además los detalles técnicos (botón «Clave», enlaces de prueba y versiones en «Estado»). En los celulares de los clientes no.
+
 ## Vender el portal a varias empresas (sitio multiempresa, v99)
 
 En vez de un sitio por empresa, **tú publicas UN sitio con tu marca** y cada empresa entra con su código. Así una actualización del sitio les llega a todas a la vez, y los servidores se actualizan con un solo comando.
@@ -367,6 +395,13 @@ En vez de un sitio por empresa, **tú publicas UN sitio con tu marca** y cada em
 5. En tu **panel del asesor**, crea el cliente con su servidor, su clave y el mismo código.
 
 Un enlace a una página concreta (p. ej. un registro del plan de acción) en un celular sin empresa pide el código y, al entrar, abre esa página.
+
+**¿Por qué me pide «el código de la empresa»? (v114)** No es una contraseña: el sitio no sabe a qué empresa pertenece ese celular. Se evita así:
+- **Sitio de una sola empresa (o una principal):** en `configurar-empresa.html` → «Tu sitio multiempresa (tu marca)» → **Empresa principal**, escribe su código (debe existir `empresas/<código>.json`). Descarga `empresa.js` y súbelo. Desde ese momento cualquier celular entra directo a esa empresa, sin preguntar nada.
+- **Varias empresas:** comparte el enlace `?e=<código>` o el QR. Abre directo, sin ventana.
+- Si el `empresa.js` del sitio ya tiene su propio servidor, el sitio funciona como esa empresa y tampoco pregunta.
+- La primera vez se necesita internet para traer los datos de la empresa; después abre sin señal.
+- La única contraseña es la del **sistema de gestión**. El preoperacional y los reportes nunca la piden.
 
 Un celular queda en una sola empresa. Para cambiar, se usa «cambiar» al pie del inicio o el enlace de otra empresa. No deja cambiar si hay registros sin enviar, y al cambiar borra lo de la anterior en ese equipo (en el servidor no se borra nada).
 
@@ -431,5 +466,7 @@ Con esta instalación, la empresa es la **responsable** de los datos (nombres, c
 - **«Sí, autorizo mis datos de salud»**: es **voluntaria**, porque la ley no permite condicionar nada a que se autoricen datos sensibles (art. 6). Si la persona no la marca, queda registrado que NO autorizó.
 
 La autorización queda con la inducción (qué marcó, versión del texto y fecha que pone el servidor), sale en la constancia PDF antes de la firma y pasa a la ficha de Personal habilitado. En **Salud**, al registrar un examen de alguien sin esa autorización, el portal lo advierte (no bloquea: el examen es una obligación del empleador). El texto está en `autorizacion-datos.js`: revísalo con el asesor legal de la empresa y, si se cambia, sube su `VERSION`.
+
+**Aviso de privacidad y contrato (v116).** Cada celular ve el aviso (`privacidad.html`) la primera vez. La cláusula modelo de transmisión de datos, lo que falta firmar y la lista del piloto están en `LEGAL-DATOS-PERSONALES.md`.
 
 *Esto es orientación general, no asesoría legal: confírmalo con un abogado.*

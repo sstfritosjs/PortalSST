@@ -105,6 +105,8 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     <div id="bProveedor" hidden>
       <label for="cProducto">Nombre de tu producto</label><input type="text" id="cProducto" placeholder="Ej: Gestión SST 360" maxlength="40">
       <p class="ayuda">Reemplaza "Portal SSTA" en los títulos, los pies de página y la app instalada. En los datos de abajo pon los de tu empresa (salen mientras alguien no ha escrito el código de su empresa).</p>
+      <label for="cDefecto">Empresa principal (opcional)</label><input type="text" id="cDefecto" placeholder="ej: acme-sas" autocapitalize="none" maxlength="40">
+      <p class="ayuda">Código de la empresa que abre <b>sola</b>, sin preguntar nada, en cualquier celular que entre al sitio (las demás siguen entrando con su enlace <code>?e=</code>). Debe existir <code>empresas/&lt;código&gt;.json</code>. Si el sitio es de una sola empresa, ponla aquí.</p>
     </div>
   </div>
 
@@ -127,6 +129,12 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     </div>
     <label for="cColor">Color de la marca</label>
     <div class="color"><input type="color" id="cColor" value="#1f3b57"><span class="ayuda" style="margin:0;">Franja superior del inicio y color de la app instalada.</span></div>
+    <h3 style="margin:16px 0 4px;font-size:15px;">Datos personales (Ley 1581 de 2012)</h3>
+    <p class="ayuda">Salen en el aviso de privacidad del portal (privacidad.html). La empresa es la responsable del tratamiento.</p>
+    <div class="g2">
+      <div><label for="cPrivCorreo">Correo para consultas y reclamos de datos personales</label><input type="email" id="cPrivCorreo" placeholder="datospersonales@empresa.com"></div>
+      <div><label for="cPrivPolitica">Enlace a su política de tratamiento de datos (opcional)</label><input type="url" id="cPrivPolitica" placeholder="https://…"></div>
+    </div>
   </div>
 
   <div class="card" id="c0312">
@@ -149,7 +157,7 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     </table>
   </div>
 
-  <div class="card">
+  <div class="card" id="cModulos">
     <h2><span class="paso">4</span>Módulos que usará</h2>
     <p class="ayuda">Los que se desmarquen no aparecen en el inicio. La marca <b>0312 · n</b> dice cuántos de los estándares que le aplican apoya cada módulo (paso 2).</p>
     <div class="mods" id="mods"></div>
@@ -180,6 +188,11 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     <h2><span class="paso">7</span>Revisar y descargar</h2>
     <div class="vista"><div class="lg" id="vLogo"></div><div><b id="vNombre">Portal SSTA</b><span id="vSub">—</span></div></div>
     <div id="errores"></div>
+    <div id="bConsola" hidden>
+      <button type="button" class="btn amber" id="btnConsola">Guardar en tu consola y publicar</button>
+      <p class="ayuda">Queda en tu servidor: sus celulares la toman de allí al abrir el portal (no hay que subir archivos a GitHub) y su servidor recibe los módulos contratados.</p>
+      <div id="msgConsola"></div>
+    </div>
     <button type="button" class="btn amber" id="btnEmpresa">⬇️ Descargar empresa.js</button>
     <div id="qrCliente" hidden style="margin:10px 0;text-align:center;"><canvas id="qrCanvas" width="220" height="220"></canvas><div class="ayuda" id="qrTexto"></div></div>
     <button type="button" class="btn ghost" id="btnManifest">⬇️ Descargar manifest.json</button>
@@ -190,6 +203,7 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
 </div>
 
 <script src="empresa.js"></script>
+<script src="empresa-motor.js"></script>
 <script src="qr.js"></script>
 <script src="auditorias-plantillas.js"></script>
 <script>
@@ -197,17 +211,20 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const E = EMPRESA;   // la configuración actual de este sitio: se edita sobre ella
-  const MODULOS = [['caliente', '🔥 Trabajo en caliente'], ['alturas', '🧗 Trabajo en alturas'], ['confinados', '🕳️ Espacios confinados'], ['izajes', '🏗️ Izajes de cargas'],
-    ['electrico', '⚡ Trabajo eléctrico'], ['ats', '🧭 ATS'], ['asistencia', '🗣️ Asistencia a charlas'], ['personal', '👷 Anexo de personal autorizado'],
-    ['epp', '🦺 Inspección de EPP'], ['brigadistas', '🧰 EPP de brigadistas'], ['tablero', '📊 Tablero'],
-    ['reportes', '⚠️ Reportes e investigación'], ['habilitacion', '🪪 Personal habilitado'], ['plan', '✅ Plan de acción'], ['inspecciones', '🔍 Inspecciones planeadas'], ['indicadores', '📈 Indicadores'],
-    ['copasst', '🤝 COPASST'], ['convivencia', '🕊️ Comité de Convivencia'], ['auditorias', '🧾 Auditorías'],
-    ['plananual', '🗓️ Plan anual de trabajo'], ['peligros', '☢️ Matriz de peligros'], ['emergencias', '🚨 Emergencias'], ['salud', '🩺 Salud en el trabajo'], ['documental', '📚 Documental y legal'], ['revision', '🏛️ Revisión por la dirección'], ['contratistas', '🚧 Contratistas'], ['usuarios', '👥 Usuarios y respaldo'], ['dotacion', '🦺 Matriz y entrega de EPP'], ['induccion', '🎓 Inducción y reinducción'], ['programas', '🧗 Programas de alto riesgo'], ['pesv', '🚗 PESV'], ['gerencia', '📊 Tablero de la gerencia'], ['ambiental', '🌱 Gestión ambiental'], ['quimicos', '⚗️ Sustancias químicas'], ['kit', '📄 Kit documental'], ['calidad', '🏅 Gestión de la calidad (ISO 9001)'], ['asesor', '🧑‍💼 Panel del asesor (clientes)'], ['cierre', '📅 Cerrar el mes'], ['evidencias', '🗂️ Carpeta de evidencias'], ['preop', '🔧 Preoperacionales'], ['proveedores', '🤝 Evaluación de proveedores'], ['comiteemergencias', '🚨 Comité de emergencias']];
+  const MODULOS = (typeof CATALOGO_MODULOS !== 'undefined' && CATALOGO_MODULOS) || [];   // v116: el catálogo está en empresa-motor.js (lo usa también la consola)
   const esFabrica = !!E.sinConfigurar;   // este sitio todavía tiene los datos de ejemplo de fábrica
   const ME = typeof MultiEmpresa !== 'undefined' && MultiEmpresa.activo;
   // En un sitio multiempresa sin empresa elegida, el formulario empieza vacío (empresa nueva).
   const nuevaEnMulti = ME && E.sinEmpresa;
-  let tipo = ME ? (E.sinEmpresa ? 'cliente' : 'cliente') : 'propio';
+  let tipo = ME ? 'cliente' : 'propio';
+  // v115: la consola abre el configurador con «?tipo=» (cliente nuevo o tu marca) o «?editar=<código>» (módulos de un cliente).
+  const QS = new URLSearchParams(location.search), DESDE_CONSOLA = QS.has('editar') || QS.has('nueva') || QS.has('tipo');
+  if (/^(propio|cliente|proveedor)$/.test(QS.get('tipo') || '') && (ME || QS.get('tipo') === 'propio')) tipo = QS.get('tipo');
+  if (E.editandoCliente) tipo = 'cliente';
+  if (DESDE_CONSOLA) { const a = document.querySelector('.hdr .back'); if (a) { a.href = 'admin.html'; a.textContent = '← Volver a la consola'; }
+    // v116: abierto desde la consola, con su mismo aspecto (oscuro), para no confundirlo con el portal de un cliente.
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'consola.css'; document.head.appendChild(l); document.body.classList.add('consola'); }
+  if (E.editandoCliente) document.querySelector('.hdr').insertAdjacentHTML('beforeend', '<div class="aviso info" style="margin-top:10px;">Editando <b>' + esc(E.nombre || E.codigo) + '</b> (código <b>' + esc(E.codigo) + '</b>) con lo que tiene publicado. Cambia lo que necesites (por ejemplo los módulos), descarga su <b>' + esc(E.codigo) + '.json</b> y reemplázalo en <code>empresas/</code> de tu repositorio.</div>');
   let logo = esFabrica || nuevaEnMulti ? '' : E.logo;
   const RAIZ_SITIO = location.href.split(/[?#]/)[0].replace(/[^/]*$/, '');
 
@@ -216,6 +233,7 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     $('cNombre').value = E.nombre || ''; $('cCorto').value = E.nombreCorto || ''; $('cNit').value = E.nit || ''; $('cSub').value = E.subtitulo || '';
     $('cCorreoEpp').value = (E.correos && E.correos.aprobacionEpp) || ''; $('cDominio').value = (E.correos && E.correos.dominio) || '';
     $('cCentros').value = (E.centrosCosto || []).join('\n');
+    $('cPrivCorreo').value = (E.privacidad && E.privacidad.correo) || ''; $('cPrivPolitica').value = (E.privacidad && E.privacidad.politica) || '';
     $('cWaNombre').value = (E.contactoEpp && E.contactoEpp.nombre) || ''; $('cWaNumero').value = (E.contactoEpp && E.contactoEpp.whatsapp) || '';
     if (E.servidor) $('cServidorTxt').value = "  servidor: '" + E.servidor + "',\n  apiToken: '" + (E.apiToken || '') + "',";
   } else {
@@ -227,14 +245,20 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
   $('cCodigo').value = (ME && E.codigo) || '';
   $('cSitio').value = RAIZ_SITIO;
   $('cProducto').value = (ME ? MultiEmpresa.proveedor.producto : E.producto) || '';
-  const marcarTipo = ()=> { document.querySelectorAll('[name="tipo"]').forEach((r)=> { r.checked = r.value === tipo; }); $('bCliente').hidden = tipo !== 'cliente'; $('bProveedor').hidden = tipo !== 'proveedor'; };
+  const marcarTipo = ()=> { document.querySelectorAll('[name="tipo"]').forEach((r)=> { r.checked = r.value === tipo; }); $('bCliente').hidden = tipo !== 'cliente'; $('bProveedor').hidden = tipo !== 'proveedor';
+    // El panel del asesor es de la consola del administrador: no es un módulo de los clientes.
+    const ma = document.querySelector('[data-mod="asesor"]'); if (ma) ma.closest('label').hidden = tipo === 'cliente'; };
   $('tipos').addEventListener('change', (e)=> {
     const r = e.target.closest('[name="tipo"]'); if (!r) return; tipo = r.value; marcarTipo();
     // Tu marca: se arranca de lo que tiene el sitio (si es multiempresa, la configuración del proveedor).
-    if (tipo === 'proveedor' && ME) { const P = MultiEmpresa.proveedor; $('cNombre').value = P.nombre || ''; $('cCorto').value = P.nombreCorto || ''; $('cNit').value = P.nit || ''; $('cSub').value = P.subtitulo || ''; logo = /^data:/.test(P.logo || '') ? P.logo : ''; if (P.colorMarca) $('cColor').value = P.colorMarca; $('cServidorTxt').value = P.servidor ? "  servidor: '" + P.servidor + "',\n  apiToken: '" + (P.apiToken || '') + "'," : ''; }
+    if (tipo === 'proveedor') cargarProveedor();
     pintar();
   });
+  function cargarProveedor(){
+    if (ME) { const P = MultiEmpresa.proveedor; $('cNombre').value = P.nombre || ''; $('cCorto').value = P.nombreCorto || ''; $('cNit').value = P.nit || ''; $('cSub').value = P.subtitulo || ''; logo = /^data:/.test(P.logo || '') ? P.logo : ''; if (P.colorMarca) $('cColor').value = P.colorMarca; $('cDefecto').value = P.empresaPorDefecto || ''; $('cServidorTxt').value = P.servidor ? "  servidor: '" + P.servidor + "',\n  apiToken: '" + (P.apiToken || '') + "'," : ''; }
+  }
   marcarTipo();
+  if (tipo === 'proveedor') cargarProveedor();
   // Formatos de gestión que trajeron versiones nuevas del portal (un empresa.js viejo no los tiene).
   const GESTION = { 'SG-REPORTE': 'Reporte e investigación de actos, condiciones, incidentes y accidentes', 'SG-PLAN': 'Plan de acción del SG-SST', 'SG-HABILITACION': 'Estado de habilitación del personal',
     'SG-INSPECCION': 'Inspección planeada / preoperacional', 'SG-INVENTARIO': 'Inventario de equipos e inspecciones', 'SG-INDICADORES': 'Informe de indicadores del SG-SST',
@@ -252,6 +276,7 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
       '<td data-l="Actualización"><input type="text" data-k="actualizacion" value="' + esc(f.actualizacion || '') + '" placeholder="dd/mm/aaaa"></td></tr>';
   }).join('');
   $('mods').innerHTML = MODULOS.map(([k, t]) => '<label><input type="checkbox" data-mod="' + k + '"' + (!E.modulos || E.modulos[k] !== false ? ' checked' : '') + '> ' + t + '</label>').join('');
+  marcarTipo();
 
   // ── Logo: se reduce y queda dentro de empresa.js (un solo archivo que subir)
   $('cLogo').addEventListener('change', () => {
@@ -277,7 +302,9 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     const t = $('cServidorTxt').value;
     const s = (/servidor:\s*'([^']+)'/.exec(t) || /(https:\/\/script\.google\.com\/macros\/s\/[^\s'"]+)/.exec(t) || [])[1] || '';
     const k = (/apiToken:\s*'([^']+)'/.exec(t) || [])[1] || '';
-    return { servidor: s.trim(), apiToken: k.trim() };
+    // v116: lo que verConfiguracion da para la consola (no va en empresa.js ni en el archivo del cliente).
+    const x = (n) => ((new RegExp(n + ":\\s*'([^']*)'")).exec(t) || [])[1] || '';
+    return { servidor: s.trim(), apiToken: k.trim(), clave: x('clave').trim(), llaveProveedor: x('llaveProveedor').trim(), scriptId: x('scriptId').trim() };
   }
   function armar() {
     const formatos = {};
@@ -293,21 +320,22 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     // Lo que el formulario no muestra (requisitos de habilitación, etc.) se conserva tal cual.
     // El sitio del proveedor parte de su propia configuración, nunca de la empresa que esté abierta en este equipo.
     const base = tipo === 'proveedor' && ME ? MultiEmpresa.proveedor : E;
-    const otros = {}; Object.keys(base).forEach((k) => { if (['sinEmpresa', 'sinConfigurar', 'codigo', 'nombre', 'nombreCorto', 'nit', 'subtitulo', 'logo', 'colorMarca', 'formatos', 'modulos', 'correos', 'contactoEpp', 'centrosCosto', 'servidor', 'apiToken', 'demo', 'perfil0312'].indexOf(k) === -1) otros[k] = JSON.parse(JSON.stringify(base[k])); });
+    const otros = {}; Object.keys(base).forEach((k) => { if (['sinEmpresa', 'sinConfigurar', 'codigo', 'nombre', 'nombreCorto', 'nit', 'subtitulo', 'logo', 'colorMarca', 'formatos', 'modulos', 'correos', 'privacidad', 'contactoEpp', 'centrosCosto', 'servidor', 'apiToken', 'demo', 'perfil0312', 'empresaPorDefecto', 'editandoCliente', 'consola'].indexOf(k) === -1) otros[k] = JSON.parse(JSON.stringify(base[k])); });
     const p0312 = perfil0312();
     return Object.assign(otros, {
       nombre: $('cNombre').value.trim(), nombreCorto: $('cCorto').value.trim().toUpperCase(), nit: $('cNit').value.trim(), subtitulo: $('cSub').value.trim(),
       logo: logo || '', colorMarca: $('cColor').value, formatos, modulos,
       correos: { aprobacionEpp: $('cCorreoEpp').value.trim(), dominio: $('cDominio').value.trim().replace(/^@/, '') },
+      privacidad: { correo: $('cPrivCorreo').value.trim(), politica: /^https:\/\//.test($('cPrivPolitica').value.trim()) ? $('cPrivPolitica').value.trim() : '' },
       contactoEpp: { nombre: $('cWaNombre').value.trim(), cargo: '', whatsapp: $('cWaNumero').value.trim() },
       centrosCosto: centros, servidor: srv.servidor, apiToken: srv.apiToken, demo: false,
       perfil0312: tipo === 'proveedor' ? undefined : p0312
-    }, tipo === 'proveedor' ? { multiempresa: true, producto: $('cProducto').value.trim() || 'Portal SSTA', sinEmpresa: undefined, codigo: undefined } : { multiempresa: undefined, producto: tipo === 'propio' && !ME ? (E.producto || undefined) : undefined, sinEmpresa: undefined, codigo: undefined });
+    }, tipo === 'proveedor' ? { multiempresa: true, empresaPorDefecto: $('cDefecto').value.trim().toLowerCase(), producto: $('cProducto').value.trim() || 'Portal SSTA', sinEmpresa: undefined, codigo: undefined } : { multiempresa: undefined, producto: tipo === 'propio' && !ME ? (E.producto || undefined) : undefined, sinEmpresa: undefined, codigo: undefined });
   }
   const codigoOk = ()=> /^[a-z0-9][a-z0-9-]{1,39}$/.test($('cCodigo').value.trim());
   const enlace = ()=> String($('cSitio').value.trim() || RAIZ_SITIO).replace(/\/?$/, '/') + '?e=' + encodeURIComponent($('cCodigo').value.trim());
   function jsonCliente(c){
-    const emp = Object.assign({}, c); delete emp.multiempresa; delete emp.producto; delete emp.demo; delete emp.sinEmpresa; delete emp.codigo;
+    const emp = Object.assign({}, c); delete emp.multiempresa; delete emp.producto; delete emp.demo; delete emp.sinEmpresa; delete emp.codigo; delete emp.empresaPorDefecto;
     return JSON.stringify({ codigo: $('cCodigo').value.trim(), generado: new Date().toISOString(), empresa: emp }, null, 2);
   }
   function problemas(c) {
@@ -316,21 +344,20 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
     if (!c.nombreCorto) p.push('Falta el nombre corto.');
     if (/^TU (EMPRESA|MARCA)$/i.test(c.nombreCorto)) p.push('Cambia el nombre corto: «' + c.nombreCorto + '» es el de ejemplo.');
     if (tipo === 'cliente' && !codigoOk()) p.push('El código de la empresa: minúsculas, números y guiones (2 a 40), sin espacios.');
+    if (tipo === 'proveedor' && $('cDefecto').value.trim() && !/^[a-z0-9][a-z0-9-]{1,39}$/.test($('cDefecto').value.trim().toLowerCase())) p.push('La empresa principal: minúsculas, números y guiones (2 a 40), sin espacios.');
     if (tipo === 'proveedor' && !$('cProducto').value.trim()) a.push('Sin nombre de producto: se seguirá llamando Portal SSTA.');
     if (tipo === 'proveedor' && !c.servidor) { /* el sitio del proveedor puede no tener servidor propio */ }
     else if (!c.servidor) (tipo === 'cliente' ? p : a).push('Sin servidor: el portal no podrá guardar. Pega lo que da verConfiguracion en el paso 6.');
     if (c.servidor && !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(c.servidor)) p.push('La URL del servidor no parece la de una aplicación web de Apps Script (debe terminar en /exec).');
     if (c.servidor && !c.apiToken) p.push('Falta el apiToken (sale junto a la URL en verConfiguracion).');
     if (!logo) a.push('Sin logo: se usará un distintivo con las iniciales.');
+    if (tipo !== 'proveedor' && !(c.privacidad && c.privacidad.correo)) a.push('Sin correo para datos personales: el aviso de privacidad dirá que se pregunte al área SST.');
     if (tipo !== 'proveedor' && !c.perfil0312) a.push('Sin número de trabajadores (paso 2): el portal tomará los 60 estándares hasta que SST defina el perfil de la empresa.');
     return { p, a };
   }
-  let motor = null;
-  fetch('empresa.js', { cache: 'no-store' }).then((r) => r.text()).then((t) => {
-    const i = t.indexOf('const EMPRESA = {'), fin = t.indexOf('\n};', i) + 3;
-    motor = i >= 0 && fin > 3 ? t.slice(fin) : null;
-    pintar();
-  });
+  // v116: empresa.js lleva solo los datos; el motor está en empresa-motor.js y se actualiza con el portal
+  // (un empresa.js viejo, con el motor adentro, queda al día al volver a generarlo aquí).
+  const motor = '';
   function archivo(c) {
     return '/* ============================================================\n' +
       '   empresa.js — ' + c.nombre.replace(/\*\//g, '') + '\n' +
@@ -338,7 +365,7 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
       '   Para cambiar algo, vuelve a abrir configurar-empresa.html en este sitio:\n' +
       '   el formulario carga estos mismos datos.\n' +
       '   ============================================================ */\n\n' +
-      'const EMPRESA = ' + JSON.stringify(c, null, 2) + ';\n' + (motor || '');
+      'const EMPRESA = ' + JSON.stringify(c, null, 2) + ';\n';
   }
   /* ── v113: estándares mínimos según tamaño y riesgo (regla en auditorias-plantillas.js) ── */
   const MOD_DE_ESTANDAR = {
@@ -401,6 +428,51 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f1720;color:#d6e2ee;b
   }
   document.addEventListener('input', pintar);
   document.addEventListener('change', pintar);
+
+  /* ── v116: guardar el cliente en TU servidor desde la consola (sin archivos) ── */
+  const ADMIN = (function () { try { const x = JSON.parse(localStorage.getItem('ssta-admin-sesion') || 'null'); return x && x.token && x.exp > Date.now() && x.yo && x.yo.rol === 'admin' ? x : null; } catch (e) { return null; } })();
+  const PROV = ME ? MultiEmpresa.proveedor : null;
+  const urlConsola = PROV && PROV.servidor ? String(PROV.servidor).replace(/\/+$/, '') + '/sgsst' : '';
+  const claveConsola = (function () { try { return localStorage.getItem('ssta-admin-clave-portal') || (PROV && PROV.apiToken) || ''; } catch (e) { return (PROV && PROV.apiToken) || ''; } })();
+  const opId = () => 'cfg-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  async function getConsola(q) { const r = await fetch(urlConsola + '?' + Object.keys(q).map((k) => k + '=' + encodeURIComponent(q[k])).join('&') + '&token=' + encodeURIComponent(claveConsola) + '&sesion=' + encodeURIComponent(ADMIN.token)); return r.json(); }
+  async function postConsola(b) { const r = await fetch(urlConsola, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: claveConsola, sesion: ADMIN.token, opId: opId() }, b)) }); return r.json(); }
+  const enConsola = () => !!(ADMIN && urlConsola && tipo === 'cliente');
+  function pintarConsola() { $('bConsola').hidden = !enConsola(); }
+  document.addEventListener('change', pintarConsola);
+  $('btnConsola').addEventListener('click', async () => {
+    const msg = $('msgConsola'), b = $('btnConsola');
+    const c = armar(), { p } = problemas(c);
+    if (p.length) { msg.innerHTML = '<div class="msg mal">Corrige primero lo que está en rojo arriba.</div>'; return; }
+    const codigo = $('cCodigo').value.trim(), srv = leerServidor();
+    const config = JSON.parse(jsonCliente(c)).empresa;
+    b.disabled = true; msg.innerHTML = '<div class="msg aviso">Guardando en tu servidor…</div>';
+    try {
+      const l = await getConsola({ action: 'list', tipo: 'cliente' });
+      if (!l.ok) throw new Error(l.error || 'Tu servidor no respondió la lista de clientes.');
+      let ed = null; try { ed = JSON.parse(sessionStorage.getItem('ssta-admin-editar') || 'null'); } catch (e) {}
+      const fila = l.rows.find((x) => (ed && ed.id && x.id === ed.id)) || l.rows.find((x) => String(x.resumen.codigo || '').toLowerCase() === codigo);
+      let doc = {}, version = 0, id = fila ? fila.id : 'CLI-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+      if (fila) { const d = await getConsola({ action: 'doc', id }); if (!d.ok) throw new Error(d.error || 'No se pudo abrir el cliente.'); doc = d.doc || {}; version = d.version || 0; }
+      const p0 = c.perfil0312 || {}, mods = config.modulos || {}, ks = Object.keys(mods);
+      Object.assign(doc, {
+        nombre: c.nombre, nit: c.nit || doc.nit || '', codigo, estado: doc.estado || 'ACTIVO', modo: 'unico',
+        trabajadores: p0.trabajadores || doc.trabajadores || '', claseRiesgo: p0.claseRiesgo || doc.claseRiesgo || 'I', agropecuaria: p0.agropecuaria ? 'Sí' : (doc.agropecuaria || 'No'), grupo0312: p0.grupo0312 || doc.grupo0312 || '',
+        servidor: srv.servidor || doc.servidor || '', clave: srv.clave || doc.clave || '', llaveProveedor: srv.llaveProveedor || doc.llaveProveedor || '', scriptId: srv.scriptId || doc.scriptId || '',
+        config, publicado: new Date().toISOString(), modulosOn: ks.filter((k) => mods[k] !== false).length, modulosTotal: ks.length
+      });
+      const g = await postConsola({ action: 'guardar', tipo: 'cliente', id, doc, versionBase: version });
+      if (!g.ok) throw new Error(g.error || 'No se pudo guardar.');
+      const pub = await postConsola({ action: 'publicarCliente', id });
+      const m = pub && pub.modulos;
+      msg.innerHTML = '<div class="msg ok">✓ Guardado en tu consola. Sus celulares toman esta configuración al abrir el portal.' +
+        (m ? (m.ok ? '<br>✓ Su servidor recibió los módulos contratados.' : '<br>⚠ Módulos solo en pantalla: ' + esc(m.error || '') ) : '') +
+        '<br><a href="admin.html">← Volver a la consola</a></div>';
+      try { sessionStorage.removeItem('ssta-admin-editar'); } catch (e) {}
+    } catch (e) { msg.innerHTML = '<div class="msg mal">' + esc(e.message || 'Sin conexión con tu servidor.') + '</div>'; }
+    b.disabled = false;
+  });
+  pintarConsola();
   function descargar(nombre, texto, tipo) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([texto], { type: tipo }));

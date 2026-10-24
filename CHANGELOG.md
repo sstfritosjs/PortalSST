@@ -3,6 +3,82 @@
 Lo más nuevo arriba. Al sacar una versión: `node herramientas/subir-version.js`,
 anotarla aquí y `node herramientas/empaquetar.js`.
 
+## v116 — Clientes desde la consola, módulos en el servidor, vigilancia y datos personales
+
+**Actualiza el sitio Y los servidores** (`node herramientas/actualizar-servidores.js clientes.json`;
+la consola descarga ese archivo). En tu servidor ejecuta una vez `sgsst__instalarVigilancia`.
+Vuelve a generar tu `empresa.js` con el configurador: el motor ahora va aparte.
+
+1. La configuración de cada cliente vive en TU servidor
+  · Ya no hay que subir `empresas/<código>.json` a GitHub: los celulares leen su
+    configuración de tu servidor por el código (si no está, siguen con el archivo).
+  · `empresa.js` lleva solo los datos; el motor va en `empresa-motor.js` y se actualiza
+    con el portal (un `empresa.js` viejo sigue funcionando con su motor).
+2. Instalar en un solo flujo
+  · Desde la consola, el configurador termina con «Guardar en tu consola y publicar»:
+    registra el cliente (datos, 0312, servidor, clave, llave, scriptId) y publica su
+    configuración. Al final, su enlace y su QR. Editar un cliente usa el mismo botón.
+3. Módulos contratados también en el servidor
+  · Tu servidor le manda al del cliente los módulos apagados, firmados (HMAC-SHA256)
+    con la llave que ese servidor generó al instalarse (`verConfiguracion`). Con un
+    módulo apagado, su servidor no acepta registros nuevos de ese módulo (lo guardado
+    se sigue leyendo). Mensajes viejos, repetidos o con otra llave se rechazan.
+4. Vigilancia diaria
+  · `instalarVigilancia`: cada mañana tu servidor prueba el de cada cliente, anota estado
+    y versión, le reenvía los módulos si no los tiene y te escribe si algo falla o está
+    desactualizado (los lunes, el resumen aunque nada sea nuevo).
+  · La consola muestra la última revisión y descarga `clientes.json` para actualizar todos.
+5. Datos personales (Ley 1581 de 2012)
+  · Aviso de privacidad (`privacidad.html`) con responsable, encargado, datos, finalidad,
+    derechos y contacto; sale la primera vez en cada celular.
+  · `LEGAL-DATOS-PERSONALES.md`: quién es quién, cláusula modelo de transmisión de datos,
+    lo que falta firmar y la lista del piloto. Revísalo con un abogado.
+6. Piloto
+  · Prueba en navegador con 3G lenta y procesador 4 veces más lento (inicio y preoperacional).
+7. Consola
+  · El configurador y el panel del asesor abiertos desde la consola tienen su mismo aspecto.
+  · La cola sin señal separa lo de la consola y lo de un cliente (no se mezclan sesiones).
+
+## v115 — Dos interfaces: la consola del administrador y el portal de los clientes
+
+**Actualiza el sitio** (los servidores no cambian). Tu consola: `https://tu-sitio/admin.html`.
+
+Consola del administrador general (`admin.html`, nueva)
+  · Página aparte, oscura, sin enlace desde ningún menú de los clientes (y `noindex`).
+  · Entra solo un usuario **Administrador de tu servidor** (el del sitio). Si aún no tienes
+    usuarios, la misma página crea el primero con `sgsst__codigoAdministrador`.
+  · Clientes con su segmento 0312, código, tareas abiertas/vencidas, módulos publicados
+    («n de N módulos») y el estado de su servidor probado en vivo («Revisar» / «Revisar
+    todos»: responde, versión, por actualizar, no acepta la clave…).
+  · Instalar empresa nueva → configurador en blanco. Módulos → el configurador abre lo que
+    ese cliente tiene publicado en `empresas/<código>.json`; cambias y descargas.
+  · Panel del asesor y tareas: ahora vive dentro de la consola (vuelve a ella).
+  · Tu marca y empresa principal → configurador «Tu sitio multiempresa».
+  · La sesión, la clave y la caché de la consola se guardan aparte (`ssta-admin-…`): un
+    mismo equipo puede tener abierta la consola y el portal de un cliente sin mezclarse.
+
+Portal de los clientes
+  · Sin «Panel del asesor» en el sistema de gestión, ni en la ayuda, ni como módulo.
+  · Estado del sistema sencillo: funciona / no funciona / no activo, con el botón para
+    avisarte por WhatsApp. Enlaces de prueba, clave y versiones, solo en tu equipo.
+  · El botón «Clave» solo sale en tu equipo (o si ese celular ya tiene una guardada).
+
+## v114 — El inicio ya no pregunta nada a quien solo reporta
+
+**Actualiza el sitio** (los servidores no cambian). En un sitio multiempresa, para que
+nadie vea la ventana: `configurar-empresa.html` → «Tu sitio multiempresa» → **Empresa
+principal**, y sube el `empresa.js` nuevo.
+
+  · Empresa principal del sitio (`empresaPorDefecto`): cualquier celular entra solo a
+    ella, sin escribir código. Las demás siguen con su enlace `?e=` o su QR.
+  · El enlace `?e=` y la empresa principal entran sin mostrar ventana; solo aparece si
+    la empresa no existe o no hay señal la primera vez.
+  · Un sitio cuyo `empresa.js` ya tiene servidor funciona como esa empresa, sin preguntar.
+  · La ventana dice «¿De qué empresa eres?» y aclara que **no es una contraseña** y que
+    se pregunta una sola vez en ese celular.
+  · El botón «Clave» (clave técnica del equipo) ya no sale en la pantalla pública: solo
+    dentro del sistema de gestión o si el equipo ya tiene una guardada.
+
 ## v113 — La instalación según la Res. 0312: cuántos estándares y por categoría
 
 **Actualiza el sitio.** Los servidores no cambiaron (córrelos igual si quieres que el

@@ -39,10 +39,11 @@ video{width:100%;max-height:70vh;background:#000;border-radius:12px;}
   <div class="roles" id="roles"></div>
   <div id="lista"></div>
   <div class="card faq" id="faq"></div>
-  <div class="version-portal">Portal SSTA · versión v113</div>
+  <div class="version-portal">Portal SSTA · versión v116</div>
 </div>
 </div>
 <script src="empresa.js"></script>
+<script src="empresa-motor.js"></script>
 <script src="config.js"></script>
 <script src="common.js"></script>
 <script src="valida.js"></script>
@@ -52,7 +53,7 @@ OfflineBanner.init();
 if (typeof UpdateManager !== 'undefined') UpdateManager.init();
 const $ = UI.$;
 /* Cada guía: rol(es), módulo, pasos, consejos y video (videos/<id>.mp4, si se subió). */
-const ROLES = [['todos', 'Todos'], ['campo', 'Trabajador y supervisor'], ['sst', 'SST'], ['comite', 'Comités'], ['gerencia', 'Gerencia'], ['asesor', 'Asesor']];
+const ROLES = [['todos', 'Todos'], ['campo', 'Trabajador y supervisor'], ['sst', 'SST'], ['comite', 'Comités'], ['gerencia', 'Gerencia']];
 const GUIAS = [
   { id: 'empezar', ic: '🚀', rol: ['todos'], t: 'Entrar al portal e instalarlo en el celular', href: 'index.html', video: 'entrar',
     pasos: ['Abre el enlace que te dio el responsable de SST (o escanea el QR). Si te pide el código de la empresa, escríbelo una sola vez.', 'Si aparece 🔑 Clave, escribe la clave del portal que te dieron: queda guardada en ese celular.', 'Si la empresa usa usuarios con nombre, toca 👤 Entrar y escribe tu usuario y tu clave.', 'Para tenerlo como app: en Android, menú ⋮ → «Instalar aplicación»; en iPhone, Safari → Compartir → «Agregar a inicio».', 'El inicio tiene dos partes: «En cada jornada» (ATS, permisos, charlas, preoperacionales, reportar), que abre cualquiera, y el «Sistema de gestión» (pasos 1 a 5, cronograma del mes y pendientes), que pide entrar con tu usuario.'],
@@ -77,7 +78,7 @@ const GUIAS = [
   { id: 'pendientes', ic: '📌', rol: ['todos'], t: 'Mis pendientes y el resumen del lunes', href: 'index.html', video: '',
     pasos: ['En el inicio, debajo del cronograma del mes, está «Pendientes»: lo vencido primero y luego lo que vence pronto, de todos los módulos.', 'Con tu usuario, «Míos» muestra lo que tiene tu nombre como responsable; «Todos», lo de la empresa.', 'Toca un pendiente para abrirlo en su módulo y resolverlo.', 'Cada lunes llega a tu correo el resumen de lo tuyo para la semana (si tu usuario tiene correo).'],
     tips: ['Para que algo te llegue a ti, tu nombre debe estar igual en el responsable de la acción o de la actividad del plan.', 'Los exámenes médicos solo los ven Administrador y SST.'] },
-  { id: 'plananual', ic: '🗓️', rol: ['sst', 'asesor'], t: 'Armar el plan anual de trabajo según la empresa', href: 'plan-anual.html', video: '',
+  { id: 'plananual', ic: '🗓️', rol: ['sst'], t: 'Armar el plan anual de trabajo según la empresa', href: 'plan-anual.html', video: '',
     pasos: ['Primero define el perfil de la empresa (trabajadores y clase de riesgo) y carga la matriz de peligros, los químicos y los vehículos si los hay.', 'En Plan anual de trabajo toca «Armar el plan según la empresa»: cada actividad propuesta dice por qué (estándar, peligro de la matriz, inventario).', 'Desmarca lo que no aplique y crea el plan; luego ajusta meses y responsables.', 'Con un plan ya hecho, «Sugerencias según la empresa» propone solo lo que le falta.'],
     tips: ['Las actividades del mes aparecen en los pendientes de su responsable y en su correo del lunes.'] },
   { id: 'cierre', ic: '📅', rol: ['sst', 'gerencia'], t: 'Cerrar el mes y sacar el informe mensual', href: 'cierre-mes.html', video: '',
@@ -86,7 +87,7 @@ const GUIAS = [
   { id: 'qr', ic: '🏷️', rol: ['sst', 'campo'], t: 'Etiquetas QR en los equipos', href: 'inspecciones.html', video: '',
     pasos: ['En Inspecciones toca «Etiquetas QR del inventario» (o, dentro de un equipo, «Etiqueta QR»).', 'Imprime la hoja, recorta y pega cada etiqueta en su equipo (mejor plastificada).', 'Para inspeccionar, escanea la etiqueta con la cámara del celular: se abre la inspección de ese equipo.'],
     tips: ['En el sitio de tu marca, la etiqueta lleva el código de la empresa: un celular nuevo entra a la empresa correcta sin escribirlo.'] },
-  { id: 'evidencias', ic: '🗂️', rol: ['sst', 'asesor'], t: 'Carpeta de evidencias y autoevaluación', href: 'evidencias.html', video: '',
+  { id: 'evidencias', ic: '🗂️', rol: ['sst'], t: 'Carpeta de evidencias y autoevaluación', href: 'evidencias.html', video: '',
     pasos: ['Abre Carpeta de evidencias: cada estándar mínimo que le aplica a la empresa aparece con la evidencia que ya está en el portal.', 'Filtra por «Falta» o «Incompletos» y usa Abrir para ir al módulo donde se resuelve.', 'Saca el Índice de evidencias (PDF) para el auditor.', 'Con «Llevar a una autoevaluación» se crea la autoevaluación con la evidencia escrita y «cumple» sugerido en lo que está al día: revisa cada estándar y guarda.'],
     tips: ['El porcentaje de la carpeta es una guía, no la calificación oficial de la Res. 0312.'] },
   { id: 'plan', ic: '✅', rol: ['sst', 'campo', 'comite'], t: 'Plan de acción: avances y cierre', href: 'plan-accion.html', video: 'plan',
@@ -98,10 +99,10 @@ const GUIAS = [
     pasos: ['+ Identificar peligro: proceso, tarea, clasificación, descripción y controles existentes.', 'Elige ND, NE y NC: el portal calcula NP, NR, el nivel y la aceptabilidad.', 'Escribe las medidas de intervención por jerarquía; las que estén «por implementar» van al plan de acción.', 'Registra la revisión anual con la participación de los trabajadores.'] },
   { id: 'quimicos', ic: '⚗️', rol: ['sst'], t: 'Sustancias químicas (SGA y Res. 773)', href: 'quimicos.html', video: 'quimicos',
     pasos: ['+ Agregar sustancia: nombre, dónde se almacena, pictogramas (como en la etiqueta), ficha de datos de seguridad y etiqueta. Adjunta la ficha en PDF.', 'Almacenamiento: muestra por cada lugar qué no puede ir junto (p. ej. inflamable con comburente, ácido con base) y por qué.', 'Res. 773: semáforo de las obligaciones; «Acciones de lo que falta» las crea en el plan.'] },
-  { id: 'kit', ic: '📄', rol: ['sst', 'asesor'], t: 'Kit documental: política, reglamento, procedimientos', href: 'documentos.html', video: 'kit',
+  { id: 'kit', ic: '📄', rol: ['sst'], t: 'Kit documental: política, reglamento, procedimientos', href: 'documentos.html', video: 'kit',
     pasos: ['Completa los datos de la empresa (representante legal, ARL, responsable del SG-SST).', 'Abre cada documento con 👁 Ver; sácalo en 🖨️ PDF o en 📝 Word para ajustarlo.', 'Cuando esté revisado, ✓ Aprobar: queda en el listado maestro con su versión y próxima revisión. Adjunta allí la versión firmada.'],
     tips: ['Cada documento dice qué estándar de la Res. 0312 cubre y si le aplica a la empresa (7, 21 o 60).'] },
-  { id: 'auditorias', ic: '🧾', rol: ['sst', 'asesor'], t: 'Autoevaluación de estándares mínimos y auditorías', href: 'auditorias.html', video: '',
+  { id: 'auditorias', ic: '🧾', rol: ['sst'], t: 'Autoevaluación de estándares mínimos y auditorías', href: 'auditorias.html', video: '',
     pasos: ['Define el perfil (trabajadores y clase de riesgo): el portal sabe si te aplican 7, 21 o 60 estándares.', '+ Nueva → la autoevaluación que te aplica (sale de primera) o una auditoría (Decreto 1072, ISO 45001, 14001, 9001, RUC, de clientes).', 'Califica cada ítem; las pistas muestran lo que el portal ya sabe. Cada no cumplimiento crea su acción.'] },
   { id: 'calidad', ic: '🏅', rol: ['sst', 'gerencia'], t: 'Calidad: PQRS, no conformes y satisfacción', href: 'calidad.html', video: 'calidad',
     pasos: ['PQRS: registra la queja o reclamo del cliente; el plazo de respuesta se calcula solo. Escribe la respuesta para cerrarla; si procede, crea la acción correctiva.', 'No conforme: registra lo que no cumple, su tratamiento y su costo.', 'Satisfacción: registra cada encuesta; el portal calcula la satisfacción y el NPS. Hay encuesta en blanco para imprimir.', 'Contexto, riesgos y objetivos de calidad completan la ISO 9001.'] },
@@ -113,14 +114,9 @@ const GUIAS = [
     pasos: ['Todo el SG-SST en una pantalla con semáforos: autoevaluación, accidentalidad, plan de acción, comités, programas y más.', 'El informe en PDF sirve para la revisión por la dirección.', 'Desde el 15 de noviembre recuerda el reporte anual de estándares mínimos.'] },
   { id: 'usuarios', ic: '👥', rol: ['sst'], t: 'Usuarios, roles y respaldo', href: 'usuarios.html', video: '',
     pasos: ['El primer administrador entra con el código que da el servidor (▶ codigoAdministrador).', 'Crea los usuarios con su rol: administrador, SST, supervisor, comité o consulta. Cada uno cambia su clave temporal al entrar.', 'La bitácora muestra quién hizo qué; el respaldo semanal copia las hojas a Drive.'] },
-  { id: 'asesor', ic: '🧑‍💼', rol: ['asesor'], t: 'Panel del asesor: clientes y tareas', href: 'asesor.html', video: 'asesor',
-    pasos: ['+ Nuevo cliente con su número de trabajadores, riesgo, servidor (/exec) y la clave de su portal: el portal dice si le aplican 7, 21 o 60 estándares. Sin servidor no se le pueden asignar tareas.', 'Asignar una tarea: en la tarjeta de la empresa toca «Asignar tarea» → qué debe hacer, detalle, responsable (la lista trae los usuarios de su portal; con «Otro» escribes el nombre), fecha límite y prioridad → «Asignar la tarea». Si su portal usa usuarios, entra una vez con el usuario SST que te crearon.', 'La tarea queda en SU plan de acción con origen «Asesor SST», en sus pendientes del inicio (destacada como «Tarea del asesor SST») y en el correo del lunes de esa persona. Con los avisos por correo configurados le llega además un correo de una vez.', 'Seguimiento: «Ver sus tareas» muestra abiertas, vencidas y cerradas, el avance (cuántas cerradas y la última anotación del cliente). Cuando la cierren, «Verificar» o «Reabrir»; con «Anotar al cliente» le dejas un mensaje en la tarea.', '«Tareas de sus estándares» crea de una vez las tareas de los estándares que no cumplió en su autoevaluación. «Traer el avance de todos» actualiza las tarjetas de todos tus clientes.'],
-    tips: ['La lista de usuarios para elegir el responsable sale de su servidor en la versión v107 o posterior; con uno anterior escribe el nombre tal como está en su portal (así le aparece en sus pendientes).', 'Con el sitio multiempresa, cada cliente entra a tu sitio con ?e=código. Para actualizar sus servidores: node herramientas/actualizar-servidores.js clientes.json.'] },
-  { id: 'informe', ic: '📈', rol: ['sst', 'gerencia', 'asesor'], t: 'Informe del SG-SST con gráficas y sugerencias', href: 'informe.html', video: '',
+  { id: 'informe', ic: '📈', rol: ['sst', 'gerencia'], t: 'Informe del SG-SST con gráficas y sugerencias', href: 'informe.html', video: '',
     pasos: ['Abre «Informe del SG-SST» (o desde el tablero de la gerencia, «Informe con gráficas y sugerencias»).', 'Elige el periodo: mes, trimestre o año. El informe junta todo lo registrado: accidentalidad, plan anual, plan de acción, inspecciones, comités, emergencias, químicos, ambiental, contratistas, EPP y evidencias de los estándares.', 'Revisa las sugerencias de mejora (alta, media y baja): cada una dice por qué sale, la norma y dónde se arregla. Con «Crear acción» queda en el plan de acción con responsable y fecha; «Abrir el módulo» te lleva a corregirlo.', '«Sacar el PDF con firma»: escribe el responsable del SG-SST, las conclusiones y firma en la pantalla (o deja la línea para firmar a mano). Sale con el resumen, las gráficas, las sugerencias y las cifras.'],
-    tips: ['La gerencia (rol consulta) ve el informe sin datos de salud individual; el área SST sí los ve.', 'Sirve como insumo para la revisión por la dirección y la rendición de cuentas (Dec. 1072 de 2015, arts. 2.2.4.6.31 y 2.2.4.6.8).'] },
-  { id: 'configurar', ic: '⚙️', rol: ['asesor'], t: 'Configurar una empresa nueva', href: 'configurar-empresa.html', video: '',
-    pasos: ['Instala su servidor en su cuenta de Google (guía INSTALAR-NUEVA-EMPRESA.md).', 'En configurar-empresa: «Empresa dentro de tu sitio multiempresa» → código, datos, logo, formatos, módulos y servidor.', 'Descarga empresas/<código>.json, súbelo a tu repositorio y envía el enlace o el QR.'] }
+    tips: ['La gerencia (rol consulta) ve el informe sin datos de salud individual; el área SST sí los ve.', 'Sirve como insumo para la revisión por la dirección y la rendición de cuentas (Dec. 1072 de 2015, arts. 2.2.4.6.31 y 2.2.4.6.8).'] }
 ];
 const FAQ = [['¿Qué pasa si no hay señal?', 'Todo se guarda en el celular y queda «⏳ pendiente». Se envía solo cuando vuelve la señal (el número en la barra muestra cuántos faltan). No borres los datos del navegador ni desinstales la app mientras haya pendientes.'],
   ['Olvidé la clave del portal', 'Pídela al responsable de SST. Si la empresa usa usuarios con nombre, el administrador te puede dar una clave temporal.'],

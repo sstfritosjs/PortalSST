@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="common.css">
 <link rel="stylesheet" href="sgsst.css">
+<link rel="stylesheet" href="consola.css">
 <style>
 .seg{display:inline-block;font-weight:800;font-size:11px;border-radius:6px;padding:2px 7px;margin-right:4px;background:#151b24;color:#fff;}
 .seg.s3{background:#0a8f7a;} .seg.s7{background:#2f7d55;} .seg.s21{background:#b07a00;} .seg.s60{background:#9c2f22;}
@@ -36,22 +37,23 @@
 #cTar > .m{font-size:13px;line-height:1.45;}
 </style>
 </head>
-<body>
+<body class="consola">
 <div class="wrap">
 <div class="screen active" id="scrLista">
   <div class="hdr">
-    <a class="back" href="index.html">← Volver al portal</a>
-    <div class="marca-titulo"><span class="marca" role="img" aria-label="Logo de la empresa"></span><div><div class="eyebrow">Asesoría SST</div>
+    <a class="back" href="admin.html">← Volver a la consola</a>
+    <div class="marca-titulo"><span class="marca" role="img" aria-label="Logo de la empresa"></span><div><div class="eyebrow">Consola del administrador</div>
     <h1>Panel del asesor</h1>
     <p>Tus empresas cliente por tamaño y riesgo (7, 21 o 60 estándares), las tareas que les dejas y su avance</p></div></div>
   </div>
+  <span class="sello-consola">🔒 Consola del administrador</span>
   <div id="avisoSrv"></div><div id="avisoCopia"></div>
   <div class="acciones-top">
     <button type="button" class="btn amber" id="btnNuevo">+ Nuevo cliente</button>
     <button type="button" class="btn ghost" id="btnSync">Traer el avance de todos</button>
     <button type="button" class="btn ghost" id="btnPdf">Estado de mis clientes (PDF)</button>
   </div>
-  <div class="aviso info como"><b>Para dejarle una tarea a una empresa:</b> toca «Asignar tarea» en su tarjeta. Queda en su plan de acción, en los pendientes del inicio y en el correo del lunes de quien la recibe; aquí ves si está abierta, vencida o cerrada. <a href="ayuda.html#asesor">Cómo funciona</a></div>
+  <div class="aviso info como"><b>Para dejarle una tarea a una empresa:</b> toca «Asignar tarea» en su tarjeta. Queda en su plan de acción, en los pendientes del inicio y en el correo del lunes de quien la recibe; aquí ves si está abierta, vencida o cerrada. <a href="admin.html#ayuda">Cómo funciona</a></div>
   <div class="kpis" id="kpis"></div>
   <div class="filtro" id="fGrupo">
     <button type="button" class="on" data-g="">Todos</button><button type="button" data-g="3">3 estándares</button><button type="button" data-g="7">7 estándares</button><button type="button" data-g="21">21 estándares</button><button type="button" data-g="60">60 estándares</button>
@@ -60,11 +62,12 @@
     <input type="search" class="buscar" id="buscar" placeholder="Buscar cliente" style="margin:0;"></div>
   <div id="fEstado" style="margin-top:10px;"></div>
   <div id="lista"><div class="empty">Cargando…</div></div>
-  <div class="version-portal">Portal SSTA · versión v113</div>
+  <div class="version-portal">Portal SSTA · versión v116</div>
 </div>
 <div class="screen" id="scrCli"></div>
 </div>
 <script src="empresa.js"></script>
+<script src="empresa-motor.js"></script>
 <script src="config.js"></script>
 <script src="common.js"></script>
 <script src="valida.js"></script>
@@ -78,6 +81,8 @@ if (typeof Outbox !== 'undefined') Outbox.flush();
 if (typeof UpdateManager !== 'undefined') UpdateManager.init();
 
 const $ = UI.$;
+// v115: el panel es de la consola del administrador general; sin su sesión, se entra por la consola.
+if (!(Sesion.yo() && ['admin', 'sst'].indexOf(Sesion.rol()) !== -1)) location.replace('admin.html');
 const ORIGEN = 'Asesor SST';
 const C_CLI = [{ k: 'nombre', l: 'Empresa', req: true }, { k: 'nit', l: 'NIT', medio: true }, { k: 'ciudad', l: 'Ciudad', medio: true },
   { k: 'actividad', l: 'Actividad económica' },
@@ -88,6 +93,8 @@ const C_CLI = [{ k: 'nombre', l: 'Empresa', req: true }, { k: 'nit', l: 'NIT', m
   { k: 'servidor', l: 'URL del servidor del cliente (/exec)', ph: 'https://script.google.com/macros/s/…/exec', ayuda: 'La que sale en verConfiguracion del servidor único de la empresa. Sin ella, el cliente queda solo como registro (no se le pueden dejar tareas).' },
   { k: 'modo', l: 'Tipo de servidor', t: 'select', op: [['unico', 'Servidor único (empresa instalada con el portal)'], ['sgsst', 'URL directa del SG-SST']], medio: true },
   { k: 'clave', l: 'Clave del portal del cliente', medio: true, ayuda: 'La clave que se escribe en 🔑 Clave en sus celulares. Queda guardada en tu servidor; solo la ven Administrador y SST.' },
+  { k: 'llaveProveedor', l: 'Llave del proveedor', medio: true, ayuda: 'Sale en su verConfiguracion (llaveProveedor). Con ella tu consola le manda los módulos contratados a su servidor.' },
+  { k: 'scriptId', l: 'ID del proyecto de Apps Script', medio: true, ayuda: 'Sale en su verConfiguracion (scriptId). Lo usa actualizar-servidores.js.' },
   { k: 'proximaVisita', l: 'Próxima visita', t: 'date', medio: true }, { k: 'estado', l: 'Estado', t: 'select', op: ['ACTIVO', 'INACTIVO'], medio: true },
   { k: 'notas', l: 'Notas', t: 'textarea' }];
 let rows = [], fG = '', fE = '', actual = null;
@@ -103,7 +110,7 @@ const verChip = (v)=> !v ? '' : v === VERSION_PORTAL_WEB ? '<span class="chip ok
 /* ── Conexión con el servidor de cada cliente ── */
 const Cli = {
   url(c){ const b = String(c.servidor || '').trim().replace(/\/+$/, ''); return !b ? '' : c.modo === 'sgsst' ? b : b + '/sgsst'; },
-  _k(c){ return 'ssta-sesion-cli:' + c.id; },
+  _k(c){ return 'ssta-admin-cli:' + c.id; },
   ses(c){ try { const s = JSON.parse(localStorage.getItem(this._k(c)) || 'null'); return s && s.exp > Date.now() ? s : null; } catch (e) { return null; } },
   async _json(res){ const t = await res.text(); try { return JSON.parse(t); } catch (e) { return { ok: false, error: 'El servidor del cliente no respondió con datos (¿URL correcta y publicada como aplicación web?).' }; } },
   async get(c, params){
@@ -149,6 +156,9 @@ async function cargar(){
   const r = await SGSST.listar('cliente');
   UI.avisoCopia($('avisoCopia'), r);
   rows = r.rows; pintar();
+  // v115: desde la consola, «Tareas» abre directo ese cliente (#cli=<id>).
+  const m = /^#cli=([\w-]+)/.exec(location.hash || '');
+  if (m && rows.some((x)=> x.id === m[1])) { history.replaceState(null, '', location.pathname); abrir(m[1]); }
 }
 function pintar(){
   const h = UI.hoy(), act = de('cliente').filter((x)=> x.estado !== 'INACTIVO');
@@ -298,7 +308,7 @@ function pintarTareas(perfil){
    que es quien manda los correos y solo a esas direcciones. */
 function configurarCorreos(perfil){
   const c = actual, pr = perfil ? perfil.resumen : {};
-  let mio = ''; try { mio = (Sesion.yo() || {}).correo || localStorage.getItem('ssta-correo-asesor') || ''; } catch (e) {}
+  let mio = ''; try { mio = (Sesion.yo() || {}).correo || localStorage.getItem('ssta-admin-correo-asesor') || ''; } catch (e) {}
   const m = UI.modal('<h3>Avisos por correo · ' + esc(c.nombre) + '</h3><p class="ayuda">El servidor de ' + esc(c.nombre) + ' avisa por correo cuando le dejas una tarea, le recuerda las que vencen en 3 días o ya vencieron, y te avisa a ti cuando cierran una para que la verifiques. Necesita que su servidor esté en la versión v98 o posterior.</p>' +
     '<div class="field"><label>Correo del responsable del SG-SST en la empresa *</label><input type="email" id="ccS" value="' + esc(pr.correoSST || c.correo || '') + '" autocapitalize="none"></div>' +
     '<div class="field"><label>Tu correo (copia de los avisos y tareas cerradas)</label><input type="email" id="ccA" value="' + esc(pr.correoAsesor || mio) + '" autocapitalize="none"></div>' +
@@ -315,7 +325,7 @@ function configurarCorreos(perfil){
     msg.textContent = 'Guardando…';
     const r = await Cli.pedirSiHaceFalta(c, ()=> Cli.post(c, { action: 'parche', tipo: 'empresa', id: 'EMPRESA-PERFIL', campos }));
     if (!r.ok) { msg.textContent = 'No se guardó: ' + (r.error || ''); return; }
-    try { if (ca) localStorage.setItem('ssta-correo-asesor', ca); } catch (e) {}
+    try { if (ca) localStorage.setItem('ssta-admin-correo-asesor', ca); } catch (e) {}
     m.cerrar(); UI.toast('✓ Avisos por correo configurados en el portal del cliente.'); traerTareas();
   });
 }
